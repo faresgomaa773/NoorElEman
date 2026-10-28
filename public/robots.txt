@@ -1,0 +1,33 @@
+# robots.txt — نور الإيمان
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /profile
+
+User-agent: Googlebot
+Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /profile
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /profile
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Host: https://al-noor-quest.lovable.app
+Sitemap: https://al-noor-quest.lovable.app/sitemap.xml

@@ -1,0 +1,15 @@
+{
+  "name": "نور الإيمان",
+  "short_name": "نور الإيمان",
+  "description": "أذكار الصباح والمساء، الأدعية، القرآن الكريم ومواقيت الصلاة",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FDF8F0",
+  "theme_color": "#2D6A4F",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    { "src": "/placeholder.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
