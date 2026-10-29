@@ -1,7 +1,7 @@
 import { SEO } from "@/components/SEO";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sun, Moon, BookMarked, BookOpen, Trophy, Sparkles, ArrowLeft, Calendar, CircleDot } from "lucide-react";
+import { Sun, Moon, BookMarked, BookOpen, Trophy, Sparkles, ArrowLeft, Calendar, CircleDot, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/Layout";
 import { DailyDhikrCard } from "@/components/DailyDhikrCard";
@@ -12,6 +12,7 @@ const features = [
   { to: "/morning", title: "أذكار الصباح", desc: "احفظ يومك بأذكار الصباح المباركة", icon: Sun, color: "from-amber-400 to-orange-500" },
   { to: "/evening", title: "أذكار المساء", desc: "اختم يومك بذكر الله والاستغفار", icon: Moon, color: "from-indigo-500 to-purple-600" },
   { to: "/duas", title: "الأدعية المأثورة", desc: "أدعية من القرآن والسنة لكل المناسبات", icon: BookMarked, color: "from-emerald-500 to-teal-600" },
+  { to: "/favorites", title: "مفضلتك", desc: "الأذكار والأدعية التي حفظتها للرجوع السريع", icon: Heart, color: "from-rose-500 to-red-600" },
   { to: "/tasbih", title: "السبحة الإلكترونية", desc: "سبّح وتابع عددك التراكمي", icon: CircleDot, color: "from-amber-500 to-rose-600" },
   { to: "/quran", title: "القرآن الكريم", desc: "القرآن كاملاً بالرسم العثماني", icon: BookOpen, color: "from-rose-500 to-pink-600" },
   { to: "/quiz", title: "الاختبارات الدينية", desc: "اختبر معلوماتك واجمع النقاط", icon: Trophy, color: "from-yellow-500 to-amber-600" },

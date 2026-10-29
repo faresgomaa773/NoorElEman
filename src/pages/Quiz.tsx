@@ -26,7 +26,9 @@ interface Question {
 const Quiz = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questions, setQuestions] = useState<Question[]>(() =>
+    [...DEFAULT_QUESTIONS].slice(0, 10)
+  );
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
@@ -38,16 +40,19 @@ const Quiz = () => {
   const [bestStreak, setBestStreak] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [done, setDone] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const loadQuestions = async () => {
-    setLoading(true);
     try {
       const { data, error } = await supabase.rpc("get_public_questions");
-      const source = !error && data && data.length > 0 ? (data as Question[]) : DEFAULT_QUESTIONS;
-      const shuffled = [...source].sort(() => Math.random() - 0.5).slice(0, 10);
-      setQuestions(shuffled);
+      if (!error && data && data.length > 0) {
+        const shuffled = [...(data as Question[])].sort(() => Math.random() - 0.5).slice(0, 10);
+        setQuestions(shuffled);
+      } else {
+        const shuffled = [...DEFAULT_QUESTIONS].sort(() => Math.random() - 0.5).slice(0, 10);
+        setQuestions(shuffled);
+      }
     } catch {
       const shuffled = [...DEFAULT_QUESTIONS].sort(() => Math.random() - 0.5).slice(0, 10);
       setQuestions(shuffled);

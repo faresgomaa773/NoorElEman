@@ -13,6 +13,7 @@ import Quiz from "@/pages/Quiz";
 import Quran from "@/pages/Quran";
 import Profile from "@/pages/Profile";
 import Auth from "@/pages/Auth";
+import Favorites from "@/pages/Favorites";
 
 function renderWithProviders(ui: React.ReactElement, initialRoute = "/") {
   const queryClient = new QueryClient({
@@ -113,6 +114,52 @@ describe("Application Pages & Core Functionality", () => {
 
     const allButton = screen.getByRole("button", { name: "الكل" });
     expect(allButton).toBeInTheDocument();
+  });
+
+  it("saves Azkar and Duas to localStorage Favorites and manages them in the Favorites page", async () => {
+    // 1. Save a Dhikr from Morning Azkar
+    const { unmount: unmountMorning } = renderWithProviders(<Morning />, "/morning");
+    await waitFor(() => {
+      expect(screen.getAllByLabelText("إضافة إلى المفضلة").length).toBeGreaterThan(0);
+    });
+    const addAzkarFavButtons = screen.getAllByLabelText("إضافة إلى المفضلة");
+    fireEvent.click(addAzkarFavButtons[0]);
+    expect(screen.getAllByLabelText("إزالة من المفضلة").length).toBe(1);
+    unmountMorning();
+
+    // 2. Save a Dua from Duas page
+    const { unmount: unmountDuas } = renderWithProviders(<Duas />, "/duas");
+    await waitFor(() => {
+      expect(screen.getAllByLabelText("إضافة إلى المفضلة").length).toBeGreaterThan(0);
+    });
+    const addDuaFavButtons = screen.getAllByLabelText("إضافة إلى المفضلة");
+    fireEvent.click(addDuaFavButtons[0]);
+    expect(screen.getByText("في مفضلتك")).toBeInTheDocument();
+    unmountDuas();
+
+    // 3. Open Favorites page ("مفضلتك") and verify both items are loaded from localStorage
+    renderWithProviders(<Favorites />, "/favorites");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("مفضلتك");
+
+    const articles = document.querySelectorAll("article");
+    expect(articles.length).toBe(2);
+
+    // Filter by Azkar only
+    fireEvent.click(screen.getByRole("button", { name: /الأذكار/ }));
+    expect(document.querySelectorAll("article").length).toBe(1);
+
+    // Filter by Duas only
+    fireEvent.click(screen.getByRole("button", { name: /الأدعية/ }));
+    expect(document.querySelectorAll("article").length).toBe(1);
+
+    // Back to All and clear favorites
+    fireEvent.click(screen.getByRole("button", { name: /الكل/ }));
+    expect(document.querySelectorAll("article").length).toBe(2);
+
+    const clearAllButton = screen.getByRole("button", { name: /مسح المفضلة/ });
+    fireEvent.click(clearAllButton);
+
+    expect(screen.getByText("قائمة مفضلتك فارغة حالياً")).toBeInTheDocument();
   });
 
   it("increments and resets the Tasbih counter", () => {

@@ -12,6 +12,7 @@ import Index from "./pages/Index.tsx";
 const Morning = lazy(() => import("./pages/Morning.tsx"));
 const Evening = lazy(() => import("./pages/Evening.tsx"));
 const Duas = lazy(() => import("./pages/Duas.tsx"));
+const Favorites = lazy(() => import("./pages/Favorites.tsx"));
 const Tasbih = lazy(() => import("./pages/Tasbih.tsx"));
 const Quran = lazy(() => import("./pages/Quran.tsx"));
 const Quiz = lazy(() => import("./pages/Quiz.tsx"));
@@ -30,7 +31,7 @@ const PageLoader = () => (
 
 const App = () => {
   useEffect(() => {
-    return prefetchPriorityRoutes(["/morning", "/evening", "/duas", "/quran", "/tasbih"]);
+    return prefetchPriorityRoutes(["/morning", "/evening", "/duas", "/favorites", "/quran", "/tasbih"]);
   }, []);
 
   return (
@@ -46,6 +47,7 @@ const App = () => {
                 <Route path="/morning" element={<Morning />} />
                 <Route path="/evening" element={<Evening />} />
                 <Route path="/duas" element={<Duas />} />
+                <Route path="/favorites" element={<Favorites />} />
                 <Route path="/tasbih" element={<Tasbih />} />
                 <Route path="/quran" element={<Quran />} />
                 <Route path="/quiz" element={<Quiz />} />

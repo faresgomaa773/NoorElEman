@@ -8,7 +8,7 @@ const loaders: Record<string, Loader> = {
   "/morning": () => import("@/pages/Morning.tsx"),
   "/evening": () => import("@/pages/Evening.tsx"),
   "/duas": () => import("@/pages/Duas.tsx"),
-  
+  "/favorites": () => import("@/pages/Favorites.tsx"),
   "/tasbih": () => import("@/pages/Tasbih.tsx"),
   "/quran": () => import("@/pages/Quran.tsx"),
   "/quiz": () => import("@/pages/Quiz.tsx"),

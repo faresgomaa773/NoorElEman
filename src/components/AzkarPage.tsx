@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Sun, RotateCcw, Check } from "lucide-react";
+import { Sun, RotateCcw, Check, Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_AZKAR } from "@/data/islamicData";
 import { Layout } from "@/components/Layout";
@@ -12,6 +12,7 @@ import {
   NIGHT_MODE_STYLES,
   useReadingSettings,
 } from "@/hooks/useReadingSettings";
+import { useFavorites } from "@/hooks/useFavorites";
 import { ReadingModeToolbar } from "@/components/ReadingModeToolbar";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +35,7 @@ interface Props {
 export function AzkarPage({ category, title, subtitle, Icon, gradient }: Props) {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const { toast } = useToast();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const {
     settings,
     activeTheme,
@@ -48,6 +50,7 @@ export function AzkarPage({ category, title, subtitle, Icon, gradient }: Props) 
   const { data: azkar = [], isPending: loading, isError, refetch } = useQuery<Zikr[]>({
     queryKey: ["azkar", category],
     staleTime: 5 * 60 * 1000,
+    placeholderData: () => DEFAULT_AZKAR.filter((z) => z.category === category),
     queryFn: async ({ signal }) => {
       try {
         const { data, error } = await supabase
@@ -76,6 +79,23 @@ export function AzkarPage({ category, title, subtitle, Icon, gradient }: Props) 
   };
 
   const reset = (id: string) => setCounts((p) => ({ ...p, [id]: 0 }));
+
+  const handleToggleFavorite = (z: Zikr) => {
+    const added = toggleFavorite({
+      sourceId: z.id,
+      type: "azkar",
+      title,
+      text: z.text,
+      category,
+      repeat_count: z.repeat_count,
+      virtue: z.virtue,
+      source: z.source,
+    });
+    toast({
+      title: added ? "تمت الإضافة إلى مفضلتك" : "تمت الإزالة من المفضلة",
+      description: added ? "يمكنك الرجوع إليها في صفحة مفضلتك" : undefined,
+    });
+  };
 
   const { nightMode, fontSize } = settings;
   const fontClass = FONT_SIZE_CLASSES[fontSize].azkar;
@@ -128,6 +148,7 @@ export function AzkarPage({ category, title, subtitle, Icon, gradient }: Props) 
                 const done = count >= z.repeat_count;
                 const progress = (count / z.repeat_count) * 100;
                 const remaining = Math.max(0, z.repeat_count - count);
+                const fav = isFavorite("azkar", z.id);
                 return (
                   <motion.div
                     key={z.id}
@@ -201,7 +222,7 @@ export function AzkarPage({ category, title, subtitle, Icon, gradient }: Props) 
                         {z.text}
                       </button>
 
-                      {/* side counter */}
+                      {/* side counter + favorite + reset */}
                       <div className="flex flex-col items-center gap-1 shrink-0">
                         <button
                           onClick={() => increment(z.id, z.repeat_count)}
@@ -224,20 +245,41 @@ export function AzkarPage({ category, title, subtitle, Icon, gradient }: Props) 
                         >
                           {count}/{z.repeat_count}
                         </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => reset(z.id)}
-                          className={cn(
-                            "h-6 w-6",
-                            nightMode
-                              ? "text-[#A7B8B0] hover:text-[#EAE3D2] hover:bg-[#24362F]"
-                              : "text-muted-foreground hover:text-foreground"
-                          )}
-                          aria-label="إعادة"
-                        >
-                          <RotateCcw className="h-3 w-3" />
-                        </Button>
+                        <div className="flex items-center gap-0.5 mt-0.5">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleToggleFavorite(z)}
+                            aria-pressed={fav}
+                            aria-label={fav ? "إزالة من المفضلة" : "إضافة إلى المفضلة"}
+                            className={cn(
+                              "h-7 w-7",
+                              fav
+                                ? "text-rose-500 hover:text-rose-600"
+                                : nightMode
+                                  ? "text-[#A7B8B0] hover:text-[#EAE3D2] hover:bg-[#24362F]"
+                                  : "text-muted-foreground hover:text-foreground"
+                            )}
+                          >
+                            <Heart className={cn("h-3.5 w-3.5", fav && "fill-current")} />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => reset(z.id)}
+                            className={cn(
+                              "h-7 w-7",
+                              nightMode
+                                ? "text-[#A7B8B0] hover:text-[#EAE3D2] hover:bg-[#24362F]"
+                                : "text-muted-foreground hover:text-foreground"
+                            )}
+                            aria-label="إعادة"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
 

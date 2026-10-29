@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Moon, Sun, BookOpen, Sparkles, Trophy, BookMarked, LogIn, LogOut, Shield, Menu, X, User, CircleDot } from "lucide-react";
+import { Moon, Sun, BookOpen, Sparkles, Trophy, BookMarked, LogIn, LogOut, Shield, Menu, X, User, CircleDot, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
@@ -11,6 +11,7 @@ const navItems = [
   { to: "/morning", label: "أذكار الصباح", icon: Sun },
   { to: "/evening", label: "أذكار المساء", icon: Moon },
   { to: "/duas", label: "الأدعية", icon: BookMarked },
+  { to: "/favorites", label: "مفضلتك", icon: Heart },
   { to: "/tasbih", label: "السبحة", icon: CircleDot },
   { to: "/quran", label: "القرآن", icon: BookOpen },
   { to: "/quiz", label: "الاختبار", icon: Trophy },

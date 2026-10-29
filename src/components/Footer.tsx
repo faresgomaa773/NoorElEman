@@ -1,4 +1,14 @@
+import { Link } from "react-router-dom";
 import { Sparkles, Heart } from "lucide-react";
+
+const publicLinks = [
+  { to: "/morning", label: "أذكار الصباح" },
+  { to: "/evening", label: "أذكار المساء" },
+  { to: "/duas", label: "الأدعية المأثورة" },
+  { to: "/quran", label: "القرآن الكريم" },
+  { to: "/tasbih", label: "السبحة الإلكترونية" },
+  { to: "/quiz", label: "الاختبارات الدينية" },
+];
 
 export function Footer() {
   return (
@@ -6,25 +16,34 @@ export function Footer() {
       <div className="container py-10">
         <div className="grid gap-8 md:grid-cols-3 text-center md:text-right">
           <div>
-            <div className="flex items-center justify-center md:justify-start gap-2 mb-3 font-display text-lg font-bold text-primary">
+            <Link
+              to="/"
+              className="inline-flex items-center justify-center md:justify-start gap-2 mb-3 font-display text-lg font-bold text-primary hover:opacity-90 transition-opacity"
+            >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-emerald">
                 <Sparkles className="h-4 w-4 text-primary-foreground" />
               </div>
               نور الإيمان
-            </div>
+            </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
               منصة شاملة للأذكار والأدعية والقرآن الكريم، نسأل الله أن يجعلها في موازين حسناتنا.
             </p>
           </div>
-          <div>
-            <h3 className="font-display font-semibold mb-3">المحتوى</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>أذكار من حصن المسلم</li>
-              <li>أدعية مأثورة صحيحة</li>
-              <li>القرآن الكريم</li>
-              <li>اختبارات دينية</li>
+          <nav aria-label="روابط أقسام الموقع">
+            <h3 className="font-display font-semibold mb-3">أقسام الموقع</h3>
+            <ul className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+              {publicLinks.map((item) => (
+                <li key={item.to}>
+                  <Link
+                    to={item.to}
+                    className="hover:text-primary transition-colors underline-offset-4 hover:underline"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
-          </div>
+          </nav>
           <div>
             <h3 className="font-display font-semibold mb-3">دعاء</h3>
             <p className="text-sm text-muted-foreground font-quran leading-loose">

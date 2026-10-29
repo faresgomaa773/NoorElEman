@@ -4,18 +4,21 @@ Allow: /
 Disallow: /admin
 Disallow: /auth
 Disallow: /profile
+Disallow: /favorites
 
 User-agent: Googlebot
 Allow: /
 Disallow: /admin
 Disallow: /auth
 Disallow: /profile
+Disallow: /favorites
 
 User-agent: Bingbot
 Allow: /
 Disallow: /admin
 Disallow: /auth
 Disallow: /profile
+Disallow: /favorites
 
 User-agent: Twitterbot
 Allow: /
@@ -29,5 +32,4 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-Host: https://al-noor-quest.lovable.app
 Sitemap: https://al-noor-quest.lovable.app/sitemap.xml
