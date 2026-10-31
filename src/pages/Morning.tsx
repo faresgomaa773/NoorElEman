@@ -4,11 +4,7 @@ import { SEO } from "@/components/SEO";
 
 const Morning = () => (
   <>
-    <SEO
-      title="أذكار الصباح | نور الإيمان"
-      description="أذكار الصباح المباركة من القرآن والسنة، احفظ يومك بذكر الله من الفجر إلى طلوع الشمس."
-      keywords="أذكار الصباح, اذكار الصباح, دعاء الصباح, حصن المسلم, نور الإيمان"
-    />
+    <SEO />
     <AzkarPage
       category="morning"
       title="أذكار الصباح"

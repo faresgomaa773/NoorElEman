@@ -179,11 +179,7 @@ const Quiz = () => {
 
   return (
     <Layout>
-      <SEO
-        title="اختبارات دينية | اختبر معلوماتك الإسلامية | نور الإيمان"
-        description="اختبارات دينية تفاعلية لاختبار معلوماتك في القرآن والسنة والفقه واجمع النقاط."
-        keywords="اختبارات دينية, اختبار إسلامي, مسابقات دينية, نور الإيمان"
-      />
+      <SEO />
       <section className="relative overflow-hidden bg-gradient-to-br from-yellow-600 via-amber-600 to-orange-700 text-primary-foreground py-16">
         <div className="absolute inset-0 pattern-arabesque opacity-20" />
         <div className="container relative text-center">

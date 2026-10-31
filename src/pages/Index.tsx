@@ -1,7 +1,8 @@
 import { SEO } from "@/components/SEO";
+import { HOME_FAQS } from "@/lib/site";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sun, Moon, BookMarked, BookOpen, Trophy, Sparkles, ArrowLeft, Calendar, CircleDot, Heart } from "lucide-react";
+import { Sun, Moon, BookMarked, BookOpen, Trophy, Sparkles, ArrowLeft, Calendar, CircleDot, Heart, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/Layout";
 import { DailyDhikrCard } from "@/components/DailyDhikrCard";
@@ -69,11 +70,7 @@ const Index = () => {
   });
   return (
     <Layout>
-      <SEO
-        title="نور الإيمان — أذكار وأدعية والقرآن الكريم"
-        description="منصة إسلامية متكاملة: أذكار الصباح والمساء، الأدعية، القرآن الكريم، ومواقيت الصلاة."
-        keywords="أذكار الصباح, أذكار المساء, أدعية, القرآن الكريم, مواقيت الصلاة, حصن المسلم, السبحة الإلكترونية, نور الإيمان"
-      />
+      <SEO faqs={HOME_FAQS} />
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground">
         <div className="absolute inset-0 pattern-arabesque opacity-20" />
@@ -169,7 +166,7 @@ const Index = () => {
       </section>
 
       {/* Daily verse banner */}
-      <section className="container pb-24">
+      <section className="container pb-16">
         <motion.div
           key={verse.ref}
           initial={{ opacity: 0, scale: 0.95 }}
@@ -190,6 +187,36 @@ const Index = () => {
             <p className="text-accent font-display text-sm md:text-base">{verse.ref}</p>
           </div>
         </motion.div>
+      </section>
+
+      {/* Semantic FAQ section matching FAQPage structured data */}
+      <section className="container pb-24" aria-labelledby="home-faq-heading">
+        <div className="max-w-3xl mx-auto">
+          <header className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 text-primary text-sm font-medium mb-2">
+              <HelpCircle className="h-4 w-4" />
+              <span>معلومات إسلامية تهمّك</span>
+            </div>
+            <h2 id="home-faq-heading" className="text-foreground text-2xl md:text-3xl font-bold">
+              أسئلة شائعة حول الأذكار والأدعية والقرآن الكريم
+            </h2>
+          </header>
+          <div className="grid gap-4">
+            {HOME_FAQS.map((faq) => (
+              <article
+                key={faq.question}
+                className="bg-gradient-card border border-border rounded-2xl p-6 shadow-soft"
+              >
+                <h3 className="font-display text-lg font-bold text-foreground mb-2">
+                  {faq.question}
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {faq.answer}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
       </section>
     </Layout>
   );

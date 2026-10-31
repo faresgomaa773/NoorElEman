@@ -95,11 +95,7 @@ const Tasbih = () => {
 
   return (
     <Layout>
-      <SEO
-        title="السبحة الإلكترونية | تسبيح وذكر | نور الإيمان"
-        description="سبحة إلكترونية لتسبيح الله وذكره، تابع عددك التراكمي اليومي بسهولة."
-        keywords="سبحة إلكترونية, تسبيح, ذكر, سبحان الله, الحمد لله, نور الإيمان"
-      />
+      <SEO />
       <section className="relative overflow-hidden bg-gradient-to-br from-amber-600 via-orange-600 to-rose-700 text-primary-foreground py-16">
         <div className="absolute inset-0 pattern-arabesque opacity-20" />
         <div className="container relative text-center">

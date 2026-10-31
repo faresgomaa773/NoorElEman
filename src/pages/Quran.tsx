@@ -131,11 +131,7 @@ const Quran = () => {
 
   return (
     <Layout>
-      <SEO
-        title="القرآن الكريم | تلاوة وقراءة | نور الإيمان"
-        description="القرآن الكريم كاملاً بالرسم العثماني مع تلاوات لمشاهير القراء، استمع واقرأ السور والآيات بسهولة."
-        keywords="القرآن الكريم, قرآن, تلاوة, مصحف, الرسم العثماني, نور الإيمان"
-      />
+      <SEO />
       <section className="relative overflow-hidden bg-gradient-to-br from-rose-700 via-pink-700 to-purple-800 text-primary-foreground py-16">
         <div className="absolute inset-0 pattern-arabesque opacity-20" />
         <div className="container relative text-center">

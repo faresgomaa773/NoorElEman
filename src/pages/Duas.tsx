@@ -60,11 +60,7 @@ const Duas = () => {
 
   return (
     <Layout>
-      <SEO
-        title="الأدعية المأثورة | أدعية من القرآن والسنة | نور الإيمان"
-        description="مجموعة شاملة من الأدعية المأثورة من القرآن الكريم والسنة النبوية لكل المناسبات."
-        keywords="أدعية, دعاء, أدعية مأثورة, دعاء من القرآن, دعاء من السنة, نور الإيمان"
-      />
+      <SEO />
       <section className="relative overflow-hidden bg-gradient-to-br from-emerald-700 via-teal-700 to-cyan-800 text-primary-foreground py-16">
         <div className="absolute inset-0 pattern-arabesque opacity-20" />
         <div className="container relative text-center">
