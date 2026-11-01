@@ -5,6 +5,8 @@ import { Sun, RotateCcw, Check, Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_AZKAR } from "@/data/islamicData";
 import { Layout } from "@/components/Layout";
+import { SmartLink } from "@/components/SmartLink";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -105,9 +107,33 @@ export function AzkarPage({ category, title, subtitle, Icon, gradient }: Props) 
       <section className={`relative overflow-hidden bg-gradient-to-br ${gradient} text-primary-foreground py-16`}>
         <div className="absolute inset-0 pattern-arabesque opacity-20" />
         <div className="container relative text-center">
+          <PageBreadcrumb items={[{ label: title }]} className="mb-5 text-primary-foreground/80" />
           <Icon className="h-12 w-12 mx-auto mb-4 text-accent" />
           <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">{title}</h1>
-          <p className="text-primary-foreground/85 max-w-xl mx-auto">{subtitle}</p>
+          <p className="text-primary-foreground/85 max-w-xl mx-auto mb-5">{subtitle}</p>
+          <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
+            {category === "morning" ? (
+              <SmartLink
+                to="/evening"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/15 hover:bg-white/25 px-3.5 py-1.5 font-medium text-primary-foreground transition-smooth"
+              >
+                انتقل إلى أذكار المساء الكاملة
+              </SmartLink>
+            ) : (
+              <SmartLink
+                to="/morning"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/15 hover:bg-white/25 px-3.5 py-1.5 font-medium text-primary-foreground transition-smooth"
+              >
+                انتقل إلى أذكار الصباح الكاملة
+              </SmartLink>
+            )}
+            <SmartLink
+              to="/duas"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white/15 hover:bg-white/25 px-3.5 py-1.5 font-medium text-primary-foreground transition-smooth"
+            >
+              تصفّح الأدعية المأثورة من القرآن والسنة
+            </SmartLink>
+          </div>
         </div>
       </section>
 

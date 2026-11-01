@@ -1,5 +1,12 @@
 import { SEO } from "@/components/SEO";
-import { useState } from "react";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import {
+  POPULAR_SURAHS,
+  createSurahSlug,
+  parseSurahNumberFromSlug,
+} from "@/lib/site";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, Loader2, Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
 import { Layout } from "@/components/Layout";
@@ -43,8 +50,24 @@ const RECITERS = [
   { id: "ar.hanirifai", name: "هاني الرفاعي" },
 ];
 
+const INITIAL_SURAHS: Surah[] = POPULAR_SURAHS.map((s) => ({
+  number: s.number,
+  name: `سُورَةُ ${s.name}`,
+  englishName: s.englishName,
+  englishNameTranslation: s.englishName,
+  numberOfAyahs: s.ayahs,
+  revelationType: s.revelationType,
+}));
+
 const Quran = () => {
-  const [selected, setSelected] = useState<Surah | null>(null);
+  const { surahSlug } = useParams<{ surahSlug?: string }>();
+  const navigate = useNavigate();
+  const requestedSurahNumber = parseSurahNumberFromSlug(surahSlug);
+
+  const [selected, setSelected] = useState<Surah | null>(() => {
+    if (!requestedSurahNumber) return null;
+    return INITIAL_SURAHS.find((s) => s.number === requestedSurahNumber) ?? null;
+  });
   const [reciter, setReciter] = useState<string>("ar.husarymujawwad");
   const audio = useQuranAudio();
   const {
@@ -58,9 +81,10 @@ const Quran = () => {
     resetSettings,
   } = useReadingSettings();
 
-  const { data: surahs = [], isPending: loading, isError: surahsError, refetch: retrySurahs } = useQuery<Surah[]>({
+  const { data: surahs = INITIAL_SURAHS, isPending: loading, isError: surahsError, refetch: retrySurahs } = useQuery<Surah[]>({
     queryKey: ["quran", "surahs"],
     staleTime: 24 * 60 * 60 * 1000,
+    placeholderData: () => INITIAL_SURAHS,
     queryFn: async ({ signal }) => {
       const res = await fetch("https://api.alquran.cloud/v1/surah", { signal });
       if (!res.ok) throw new Error("Could not load surahs");
@@ -69,6 +93,18 @@ const Quran = () => {
       return json.data;
     },
   });
+
+  useEffect(() => {
+    if (!requestedSurahNumber) {
+      setSelected(null);
+      return;
+    }
+    const found = surahs.find((s) => s.number === requestedSurahNumber);
+    if (found) {
+      setSelected(found);
+    }
+  }, [requestedSurahNumber, surahs]);
+
   const { data: ayahs = [], isFetching: loadingAyahs, isError: ayahsError, refetch: retryAyahs } = useQuery<Ayah[]>({
     queryKey: ["quran", "ayahs", selected?.number, reciter],
     enabled: selected !== null,
@@ -93,7 +129,14 @@ const Quran = () => {
   const openSurah = (s: Surah, reciterId: string = reciter) => {
     setSelected(s);
     setReciter(reciterId);
+    const slug = createSurahSlug(s.number, s.englishName);
+    navigate(`/quran/${slug}`);
     window.scrollTo?.({ top: 0, behavior: "smooth" });
+  };
+
+  const closeSurah = () => {
+    setSelected(null);
+    navigate("/quran");
   };
 
   const reciterName = RECITERS.find((r) => r.id === reciter)?.name || "";
@@ -123,21 +166,60 @@ const Quran = () => {
 
   const handleReciterChange = (val: string) => {
     setReciter(val);
-    if (selected) openSurah(selected, val);
   };
 
   const { nightMode, fontSize } = settings;
   const quranFontClass = FONT_SIZE_CLASSES[fontSize].quran;
 
+  const cleanSurahName = selected ? selected.name.replace(/^سُورَةُ /, "") : "";
+  const activeSurahSlug = selected ? createSurahSlug(selected.number, selected.englishName) : undefined;
+  const surahTypeAr = selected ? (selected.revelationType === "Meccan" ? "مكية" : "مدنية") : "";
+
   return (
     <Layout>
-      <SEO />
+      <SEO
+        title={
+          selected
+            ? `سورة ${cleanSurahName} مكتوبة كاملة بالرسم العثماني مع التلاوة | نور الإيمان`
+            : undefined
+        }
+        description={
+          selected
+            ? `اقرأ واستمع إلى سورة ${cleanSurahName} (${surahTypeAr} - ${selected.numberOfAyahs} آية) مكتوبة كاملة بالرسم العثماني برواية حفص عن عاصم مع تلاوة لأشهر القراء.`
+            : undefined
+        }
+        canonicalPath={activeSurahSlug ? `/quran/${activeSurahSlug}` : "/quran"}
+        breadcrumbs={
+          selected && activeSurahSlug
+            ? [
+                { name: "القرآن الكريم", path: "/quran" },
+                { name: `سورة ${cleanSurahName}`, path: `/quran/${activeSurahSlug}` },
+              ]
+            : [{ name: "القرآن الكريم", path: "/quran" }]
+        }
+      />
       <section className="relative overflow-hidden bg-gradient-to-br from-rose-700 via-pink-700 to-purple-800 text-primary-foreground py-16">
         <div className="absolute inset-0 pattern-arabesque opacity-20" />
         <div className="container relative text-center">
+          <PageBreadcrumb
+            items={
+              selected
+                ? [
+                    { label: "القرآن الكريم", to: "/quran" },
+                    { label: `سورة ${cleanSurahName}` },
+                  ]
+                : [{ label: "القرآن الكريم" }]
+            }
+          />
           <BookOpen className="h-12 w-12 mx-auto mb-4 text-accent" />
-          <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">القرآن الكريم</h1>
-          <p className="text-primary-foreground/85">مصحف التلاوة برواية حفص عن عاصم</p>
+          <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">
+            {selected ? `سورة ${cleanSurahName}` : "القرآن الكريم"}
+          </h1>
+          <p className="text-primary-foreground/85">
+            {selected
+              ? `${surahTypeAr} • ${selected.numberOfAyahs} آية • مصحف التلاوة برواية حفص عن عاصم`
+              : "مصحف التلاوة برواية حفص عن عاصم"}
+          </p>
         </div>
       </section>
 
@@ -166,7 +248,8 @@ const Quran = () => {
             )}
           >
             <button
-              onClick={() => setSelected(null)}
+              type="button"
+              onClick={closeSurah}
               className={cn(
                 "mb-6 text-sm hover:underline",
                 nightMode ? "text-[#E5C158]" : "text-primary"
@@ -186,10 +269,10 @@ const Quran = () => {
                   nightMode ? "text-[#E5C158]" : "text-primary"
                 )}
               >
-                سورة {selected.name.replace(/^سُورَةُ /, "")}
+                سورة {cleanSurahName}
               </h2>
               <p className={nightMode ? NIGHT_MODE_STYLES.mutedText : "text-muted-foreground"}>
-                {selected.revelationType === "Meccan" ? "مكية" : "مدنية"} • {selected.numberOfAyahs} آية
+                {surahTypeAr} • {selected.numberOfAyahs} آية
               </p>
             </div>
 
@@ -327,11 +410,11 @@ const Quran = () => {
               </div>
             )}
           </div>
-        ) : loading ? (
+        ) : loading && surahs.length === 0 ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : surahsError ? (
+        ) : surahsError && surahs.length === 0 ? (
           <div className="text-center py-12" role="alert">
             <p className="text-destructive mb-4">تعذّر تحميل قائمة السور.</p>
             <Button variant="outline" onClick={() => retrySurahs()}>إعادة المحاولة</Button>
@@ -352,6 +435,7 @@ const Quran = () => {
               {surahs.map((s) => (
                 <button
                   key={s.number}
+                  type="button"
                   onClick={() => openSurah(s)}
                   className={cn(
                     "group flex items-center gap-4 border rounded-xl p-4 text-right transition-smooth",

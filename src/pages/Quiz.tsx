@@ -1,4 +1,5 @@
 import { SEO } from "@/components/SEO";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -183,6 +184,7 @@ const Quiz = () => {
       <section className="relative overflow-hidden bg-gradient-to-br from-yellow-600 via-amber-600 to-orange-700 text-primary-foreground py-16">
         <div className="absolute inset-0 pattern-arabesque opacity-20" />
         <div className="container relative text-center">
+          <PageBreadcrumb items={[{ label: "الاختبار الديني" }]} className="mb-5 text-primary-foreground/80" />
           <Trophy className="h-12 w-12 mx-auto mb-4 text-accent" />
           <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">الاختبار الديني</h1>
           <p className="text-primary-foreground/85">اختبر معلوماتك واجمع النقاط لتتصدر القائمة</p>

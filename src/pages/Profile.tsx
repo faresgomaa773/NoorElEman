@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Trophy, Target, CheckCircle2, XCircle, Award, User as UserIcon, LogIn } from "lucide-react";
+import { Trophy, Target, CheckCircle2, XCircle, Award, User as UserIcon, LogIn, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileData {
   display_name: string;
@@ -20,8 +21,9 @@ interface Stats {
 }
 
 const Profile = () => {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, isAdmin, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [stats, setStats] = useState<Stats>({ total: 0, correct: 0, wrong: 0 });
   const [loading, setLoading] = useState(true);
@@ -34,21 +36,46 @@ const Profile = () => {
     }
 
     const load = async () => {
-      const [{ data: profileData }, { data: attempts }] = await Promise.all([
-        supabase.from("profiles").select("display_name, total_points").eq("id", user.id).maybeSingle(),
-        supabase.from("quiz_attempts").select("is_correct").eq("user_id", user.id),
-      ]);
+      try {
+        const [{ data: profileData }, { data: attempts }] = await Promise.all([
+          supabase.from("profiles").select("display_name, total_points").eq("id", user.id).maybeSingle(),
+          supabase.from("quiz_attempts").select("is_correct").eq("user_id", user.id),
+        ]);
 
-      if (profileData) setProfile(profileData);
-      if (attempts) {
-        const correct = attempts.filter((a) => a.is_correct).length;
-        setStats({ total: attempts.length, correct, wrong: attempts.length - correct });
+        const fallbackName =
+          (user.user_metadata?.display_name as string | undefined) ||
+          user.email?.split("@")[0] ||
+          "مستخدم";
+
+        if (profileData) {
+          setProfile(profileData);
+        } else {
+          setProfile({ display_name: fallbackName, total_points: 0 });
+        }
+
+        if (attempts) {
+          const correct = attempts.filter((a) => a.is_correct).length;
+          setStats({ total: attempts.length, correct, wrong: attempts.length - correct });
+        }
+      } catch {
+        const fallbackName =
+          (user.user_metadata?.display_name as string | undefined) ||
+          user.email?.split("@")[0] ||
+          "مستخدم";
+        setProfile({ display_name: fallbackName, total_points: 0 });
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     load();
   }, [user, authLoading]);
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast({ title: "تم تسجيل الخروج بنجاح" });
+    navigate("/");
+  };
 
   if (authLoading || loading) {
     return (
@@ -57,6 +84,7 @@ const Profile = () => {
           title="حسابي ونقاطي | نور الإيمان"
           description="تتبّع نقاطك ودقّة إجاباتك في الاختبارات الدينية على نور الإيمان."
           keywords="حساب, نقاط, إحصائيات, اختبارات دينية, نور الإيمان"
+          noindex
         />
         <div className="container py-20 text-center text-muted-foreground">جارٍ التحميل...</div>
       </Layout>
@@ -70,6 +98,7 @@ const Profile = () => {
           title="حسابي ونقاطي | نور الإيمان"
           description="تتبّع نقاطك ودقّة إجاباتك في الاختبارات الدينية على نور الإيمان."
           keywords="حساب, نقاط, إحصائيات, اختبارات دينية, نور الإيمان"
+          noindex
         />
         <div className="container py-20">
           <div className="max-w-md mx-auto text-center bg-gradient-card border border-border rounded-2xl p-10 shadow-medium">
@@ -88,6 +117,11 @@ const Profile = () => {
   }
 
   const accuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
+  const displayName =
+    profile?.display_name ||
+    (user.user_metadata?.display_name as string | undefined) ||
+    user.email?.split("@")[0] ||
+    "مستخدم";
 
   return (
     <Layout>
@@ -95,6 +129,7 @@ const Profile = () => {
         title="حسابي ونقاطي | نور الإيمان"
         description="تتبّع نقاطك ودقّة إجاباتك في الاختبارات الدينية على نور الإيمان."
         keywords="حساب, نقاط, إحصائيات, اختبارات دينية, نور الإيمان"
+        noindex
       />
       <div className="container py-12 max-w-4xl">
         <motion.div
@@ -109,8 +144,11 @@ const Profile = () => {
               <UserIcon className="h-10 w-10 text-accent" />
             </div>
             <div className="text-center md:text-right flex-1">
-              <p className="text-primary-foreground/80 text-sm">أهلاً بك،</p>
-              <h1 className="font-display text-3xl md:text-4xl font-bold">{profile?.display_name || "مستخدم"}</h1>
+              <div className="inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1 text-xs font-medium text-primary-foreground mb-2">
+                {isAdmin ? <Shield className="h-3.5 w-3.5 text-accent" /> : <UserIcon className="h-3.5 w-3.5 text-accent" />}
+                <span>{isAdmin ? "مدير الموقع" : "حساب مستخدم"}</span>
+              </div>
+              <h1 className="font-display text-3xl md:text-4xl font-bold">{displayName}</h1>
               <p className="text-primary-foreground/80 text-sm mt-1">{user.email}</p>
             </div>
             <div className="text-center bg-accent/20 border border-accent/30 rounded-2xl px-6 py-4">
@@ -174,7 +212,7 @@ const Profile = () => {
           <Button asChild variant="emerald" size="lg">
             <Link to="/quiz"><Trophy className="h-4 w-4" /> ابدأ اختبار جديد</Link>
           </Button>
-          <Button variant="outline" size="lg" onClick={signOut}>تسجيل خروج</Button>
+          <Button variant="outline" size="lg" onClick={handleSignOut}>تسجيل خروج</Button>
         </div>
       </div>
     </Layout>

@@ -1,4 +1,5 @@
 import { SEO } from "@/components/SEO";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Sparkles, RotateCcw, ChevronRight, ChevronLeft } from "lucide-react";
@@ -99,6 +100,7 @@ const Tasbih = () => {
       <section className="relative overflow-hidden bg-gradient-to-br from-amber-600 via-orange-600 to-rose-700 text-primary-foreground py-16">
         <div className="absolute inset-0 pattern-arabesque opacity-20" />
         <div className="container relative text-center">
+          <PageBreadcrumb items={[{ label: "السبحة الإلكترونية" }]} className="mb-5 text-primary-foreground/80" />
           <Sparkles className="h-12 w-12 mx-auto mb-4 text-accent" />
           <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">السبحة الإلكترونية</h1>
           <p className="text-primary-foreground/85">سبّح واذكر الله مع تتبّع تلقائي لعددك</p>

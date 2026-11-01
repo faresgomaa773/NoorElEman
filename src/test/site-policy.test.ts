@@ -4,9 +4,12 @@ import {
   PUBLIC_PATHS,
   ROUTE_SEO_META,
   SITE_URL,
+  createSurahSlug,
   getCanonicalUrl,
+  getDuaCategorySlug,
   isIndexablePath,
   normalizePath,
+  parseSurahNumberFromSlug,
 } from "../lib/site";
 import { allowsBackgroundPrefetch } from "../lib/prefetch-policy";
 
@@ -23,6 +26,25 @@ describe("Public discovery & Google Search Console indexing policy", () => {
       expect(isIndexablePath(path)).toBe(false);
     }
     expect(isIndexablePath("/quran")).toBe(true);
+  });
+
+  it("supports descriptive URLs for Quran surahs, Dua categories, and route aliases", () => {
+    expect(createSurahSlug(18, "Al-Kahf")).toBe("18-al-kahf");
+    expect(parseSurahNumberFromSlug("18-al-kahf")).toBe(18);
+    expect(parseSurahNumberFromSlug("999-invalid")).toBeNull();
+
+    expect(isIndexablePath("/quran/18-al-kahf")).toBe(true);
+    expect(isIndexablePath("/quran/114-an-nas")).toBe(true);
+    expect(isIndexablePath("/quran/999-unknown")).toBe(false);
+
+    expect(getDuaCategorySlug("أدعية الفرج والرزق")).toBe("relief-and-rizq");
+    expect(isIndexablePath("/duas/relief-and-rizq")).toBe(true);
+    expect(isIndexablePath("/duas/unknown-category")).toBe(false);
+
+    expect(normalizePath("/azkar-al-sabah")).toBe("/morning");
+    expect(normalizePath("/azkar-al-masaa")).toBe("/evening");
+    expect(getCanonicalUrl("/azkar-al-sabah")).toBe("https://al-noor-quest.lovable.app/morning");
+    expect(getCanonicalUrl("/quran/18-al-kahf/")).toBe("https://al-noor-quest.lovable.app/quran/18-al-kahf");
   });
 
   it("normalizes trailing slashes and query parameters so public routes are never marked noindex", () => {

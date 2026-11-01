@@ -63,13 +63,30 @@
       "@context": "https://schema.org",
       "@graph": [
         {
+          "@type": "Organization",
+          "@id": "https://al-noor-quest.lovable.app/#organization",
+          "name": "نور الإيمان",
+          "alternateName": "منصة نور الإيمان الإسلامية",
+          "url": "https://al-noor-quest.lovable.app/",
+          "logo": {
+            "@type": "ImageObject",
+            "@id": "https://al-noor-quest.lovable.app/#logo",
+            "url": "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/08546d39-2455-4a48-b81e-8ff8a037e911/id-preview-cfd3ae0f--3668b397-3abf-47a0-8c92-b6878c69e5eb.lovable.app-1776933579072.png",
+            "contentUrl": "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/08546d39-2455-4a48-b81e-8ff8a037e911/id-preview-cfd3ae0f--3668b397-3abf-47a0-8c92-b6878c69e5eb.lovable.app-1776933579072.png",
+            "caption": "نور الإيمان"
+          }
+        },
+        {
           "@type": "WebSite",
           "@id": "https://al-noor-quest.lovable.app/#website",
           "name": "نور الإيمان",
           "alternateName": "منصة نور الإيمان الإسلامية",
           "url": "https://al-noor-quest.lovable.app/",
           "inLanguage": "ar",
-          "description": "منصة نور الإيمان الإسلامية المتكاملة: أذكار الصباح والمساء مكتوبة من حصن المسلم، الأدعية المأثورة، القرآن الكريم بالرسم العثماني مع التلاوة، مواقيت الصلاة، والسبحة الإلكترونية."
+          "description": "منصة نور الإيمان الإسلامية المتكاملة: أذكار الصباح والمساء مكتوبة من حصن المسلم، الأدعية المأثورة، القرآن الكريم بالرسم العثماني مع التلاوة، مواقيت الصلاة، والسبحة الإلكترونية.",
+          "publisher": {
+            "@id": "https://al-noor-quest.lovable.app/#organization"
+          }
         },
         {
           "@type": "WebApplication",
@@ -80,6 +97,9 @@
           "operatingSystem": "All",
           "inLanguage": "ar",
           "description": "منصة نور الإيمان الإسلامية المتكاملة: أذكار الصباح والمساء مكتوبة من حصن المسلم، الأدعية المأثورة، القرآن الكريم بالرسم العثماني مع التلاوة، مواقيت الصلاة، والسبحة الإلكترونية.",
+          "publisher": {
+            "@id": "https://al-noor-quest.lovable.app/#organization"
+          },
           "offers": {
             "@type": "Offer",
             "price": "0",
@@ -95,7 +115,53 @@
           "inLanguage": "ar",
           "isPartOf": {
             "@id": "https://al-noor-quest.lovable.app/#website"
+          },
+          "about": {
+            "@id": "https://al-noor-quest.lovable.app/#organization"
           }
+        },
+        {
+          "@type": "ItemList",
+          "@id": "https://al-noor-quest.lovable.app/#navigation",
+          "name": "أقسام منصة نور الإيمان",
+          "itemListElement": [
+            {
+              "@type": "SiteNavigationElement",
+              "position": 1,
+              "name": "أذكار الصباح",
+              "url": "https://al-noor-quest.lovable.app/morning"
+            },
+            {
+              "@type": "SiteNavigationElement",
+              "position": 2,
+              "name": "أذكار المساء",
+              "url": "https://al-noor-quest.lovable.app/evening"
+            },
+            {
+              "@type": "SiteNavigationElement",
+              "position": 3,
+              "name": "الأدعية المأثورة",
+              "url": "https://al-noor-quest.lovable.app/duas"
+            },
+            {
+              "@type": "SiteNavigationElement",
+              "position": 4,
+              "name": "القرآن الكريم",
+              "url": "https://al-noor-quest.lovable.app/quran"
+            },
+            {
+              "@type": "SiteNavigationElement",
+              "position": 5,
+              "name": "السبحة الإلكترونية",
+              "url": "https://al-noor-quest.lovable.app/tasbih"
+            },
+            {
+              "@type": "SiteNavigationElement",
+              "position": 6,
+              "name": "الاختبار الديني",
+              "url": "https://al-noor-quest.lovable.app/quiz"
+            }
+          ]
         }
       ]
     }

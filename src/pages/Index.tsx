@@ -1,5 +1,5 @@
 import { SEO } from "@/components/SEO";
-import { HOME_FAQS } from "@/lib/site";
+import { HOME_FAQS, POPULAR_SURAHS, DUA_CATEGORY_SLUGS } from "@/lib/site";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Sun, Moon, BookMarked, BookOpen, Trophy, Sparkles, ArrowLeft, Calendar, CircleDot, Heart, HelpCircle } from "lucide-react";
@@ -10,14 +10,14 @@ import { PrayerTimesHero } from "@/components/PrayerTimesHero";
 import { SmartLink } from "@/components/SmartLink";
 
 const features = [
-  { to: "/morning", title: "أذكار الصباح", desc: "احفظ يومك بأذكار الصباح المباركة", icon: Sun, color: "from-amber-400 to-orange-500" },
-  { to: "/evening", title: "أذكار المساء", desc: "اختم يومك بذكر الله والاستغفار", icon: Moon, color: "from-indigo-500 to-purple-600" },
-  { to: "/duas", title: "الأدعية المأثورة", desc: "أدعية من القرآن والسنة لكل المناسبات", icon: BookMarked, color: "from-emerald-500 to-teal-600" },
-  { to: "/favorites", title: "مفضلتك", desc: "الأذكار والأدعية التي حفظتها للرجوع السريع", icon: Heart, color: "from-rose-500 to-red-600" },
-  { to: "/tasbih", title: "السبحة الإلكترونية", desc: "سبّح وتابع عددك التراكمي", icon: CircleDot, color: "from-amber-500 to-rose-600" },
-  { to: "/quran", title: "القرآن الكريم", desc: "القرآن كاملاً بالرسم العثماني", icon: BookOpen, color: "from-rose-500 to-pink-600" },
-  { to: "/quiz", title: "الاختبارات الدينية", desc: "اختبر معلوماتك واجمع النقاط", icon: Trophy, color: "from-yellow-500 to-amber-600" },
-  { to: "/profile", title: "حسابي ونقاطي", desc: "تابع تقدمك ونقاطك في الاختبارات", icon: Sparkles, color: "from-cyan-500 to-blue-600" },
+  { to: "/morning", title: "أذكار الصباح", desc: "احفظ يومك بأذكار الصباح المباركة مكتوبة كاملة من حصن المسلم", cta: "تصفّح أذكار الصباح", icon: Sun, color: "from-amber-400 to-orange-500" },
+  { to: "/evening", title: "أذكار المساء", desc: "اختم يومك بذكر الله والاستغفار مع عدّاد التكرار التفاعلي", cta: "تصفّح أذكار المساء", icon: Moon, color: "from-indigo-500 to-purple-600" },
+  { to: "/duas", title: "الأدعية المأثورة", desc: "أدعية صحيحة من القرآن والسنة للفرج والرزق والشفاء والاستغفار", cta: "اقرأ الأدعية المأثورة", icon: BookMarked, color: "from-emerald-500 to-teal-600" },
+  { to: "/favorites", title: "مفضلتك", desc: "الأذكار والأدعية التي حفظتها للرجوع السريع في أي وقت", cta: "افتح قائمة مفضلتك", icon: Heart, color: "from-rose-500 to-red-600" },
+  { to: "/tasbih", title: "السبحة الإلكترونية", desc: "سبّح واذكر الله وتابع مجموع تسبيحاتك اليومية بسهولة", cta: "ابدأ التسبيح الآن", icon: CircleDot, color: "from-amber-500 to-rose-600" },
+  { to: "/quran", title: "القرآن الكريم", desc: "القرآن كاملاً بالرسم العثماني مع التلاوة ووضع القراءة المريح", cta: "تلاوة وقراءة القرآن الكريم", icon: BookOpen, color: "from-rose-500 to-pink-600" },
+  { to: "/quiz", title: "الاختبارات الدينية", desc: "اختبر معلوماتك الإسلامية في القرآن والسيرة والفقه واجمع النقاط", cta: "ابدأ الاختبار الديني", icon: Trophy, color: "from-yellow-500 to-amber-600" },
+  { to: "/profile", title: "حسابي ونقاطي", desc: "تابع تقدمك وإحصائيات إجاباتك ونقاطك في الاختبارات", cta: "عرض حسابي ونقاطي", icon: Sparkles, color: "from-cyan-500 to-blue-600" },
 ];
 
 const dailyVerses = [
@@ -155,13 +155,66 @@ const Index = () => {
                     {feature.desc}
                   </p>
                   <div className="flex items-center gap-1 text-primary text-sm font-medium">
-                    اكتشف
+                    <span>{feature.cta}</span>
                     <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-smooth" />
                   </div>
                 </SmartLink>
               </motion.div>
             );
           })}
+        </div>
+      </section>
+
+      {/* Popular Surahs & Dua Categories with descriptive URLs */}
+      <section className="container pb-16" aria-labelledby="quick-seo-links-heading">
+        <div className="bg-gradient-card border border-border rounded-3xl p-6 sm:p-10 shadow-soft">
+          <div className="text-center max-w-2xl mx-auto mb-8">
+            <h2 id="quick-seo-links-heading" className="text-foreground text-2xl md:text-3xl font-bold mb-2">
+              وصول سريع للسور والأدعية الأكثر قراءة
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              روابط مباشرة وصفية لأشهر سور القرآن الكريم وتصنيفات الأدعية المأثورة
+            </p>
+          </div>
+
+          <div className="mb-8">
+            <h3 className="font-display text-base font-bold text-foreground mb-3 flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-primary" />
+              <span>سور قرآنية مختارة</span>
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {POPULAR_SURAHS.map((surah) => (
+                <SmartLink
+                  key={surah.slug}
+                  to={`/quran/${surah.slug}`}
+                  title={`قراءة واستماع سورة ${surah.name} مكتوبة كاملة`}
+                  className="flex items-center justify-between rounded-xl border border-border bg-background/70 px-4 py-3 text-sm font-medium hover:border-primary/40 hover:text-primary transition-smooth"
+                >
+                  <span className="font-quran text-base font-bold">سورة {surah.name}</span>
+                  <span className="text-xs text-muted-foreground">{surah.ayahs} آية</span>
+                </SmartLink>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="font-display text-base font-bold text-foreground mb-3 flex items-center gap-2">
+              <BookMarked className="h-4 w-4 text-primary" />
+              <span>تصنيفات الأدعية المأثورة</span>
+            </h3>
+            <div className="flex flex-wrap gap-2.5">
+              {Object.values(DUA_CATEGORY_SLUGS).map((cat) => (
+                <SmartLink
+                  key={cat.slug}
+                  to={`/duas/${cat.slug}`}
+                  title={cat.title}
+                  className="rounded-xl border border-border bg-background/70 px-4 py-2 text-xs sm:text-sm font-medium hover:border-primary/40 hover:bg-primary/5 hover:text-primary transition-smooth"
+                >
+                  أدعية {cat.category}
+                </SmartLink>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 

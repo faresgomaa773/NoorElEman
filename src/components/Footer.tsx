@@ -2,12 +2,12 @@ import { Link } from "react-router-dom";
 import { Sparkles, Heart } from "lucide-react";
 
 const publicLinks = [
-  { to: "/morning", label: "أذكار الصباح" },
-  { to: "/evening", label: "أذكار المساء" },
-  { to: "/duas", label: "الأدعية المأثورة" },
-  { to: "/quran", label: "القرآن الكريم" },
-  { to: "/tasbih", label: "السبحة الإلكترونية" },
-  { to: "/quiz", label: "الاختبارات الدينية" },
+  { to: "/morning", label: "أذكار الصباح مكتوبة", title: "قراءة أذكار الصباح الصحيحة من حصن المسلم" },
+  { to: "/evening", label: "أذكار المساء مكتوبة", title: "قراءة أذكار المساء الصحيحة من حصن المسلم" },
+  { to: "/duas", label: "الأدعية المأثورة", title: "أدعية من القرآن الكريم والسنة النبوية" },
+  { to: "/quran", label: "المصحف الشريف", title: "قراءة واستماع القرآن الكريم كاملاً" },
+  { to: "/tasbih", label: "السبحة الإلكترونية", title: "عداد التسبيح والاستغفار الإلكتروني" },
+  { to: "/quiz", label: "الاختبارات الدينية", title: "أسئلة دينية تفاعلية في القرآن والسيرة" },
 ];
 
 export function Footer() {
@@ -36,6 +36,7 @@ export function Footer() {
                 <li key={item.to}>
                   <Link
                     to={item.to}
+                    title={item.title}
                     className="hover:text-primary transition-colors underline-offset-4 hover:underline"
                   >
                     {item.label}
@@ -65,3 +66,4 @@ export function Footer() {
     </footer>
   );
 }
+

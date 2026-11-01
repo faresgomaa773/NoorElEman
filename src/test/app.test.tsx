@@ -27,7 +27,12 @@ function renderWithProviders(ui: React.ReactElement, initialRoute = "/") {
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <QuranAudioProvider>
-          <MemoryRouter initialEntries={[initialRoute]}>{ui}</MemoryRouter>
+          <MemoryRouter
+            initialEntries={[initialRoute]}
+            future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+          >
+            {ui}
+          </MemoryRouter>
         </QuranAudioProvider>
       </QueryClientProvider>
     </HelmetProvider>
@@ -43,6 +48,8 @@ describe("Application Pages & Core Functionality", () => {
     renderWithProviders(<Index />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("نور الإيمان");
     expect(screen.getByText("استكشف أقسام الموقع")).toBeInTheDocument();
+    expect(screen.getByText("أقسام الموقع")).toBeInTheDocument();
+    expect(screen.queryByText("روابط سريعة مختارة")).not.toBeInTheDocument();
   });
 
   it("loads Morning Azkar and increments counter when clicked", async () => {
@@ -202,5 +209,37 @@ describe("Application Pages & Core Functionality", () => {
     await waitFor(() => {
       expect(screen.getByText("سجّل دخولك أولاً")).toBeInTheDocument();
     });
+  });
+
+  it("registers a new user account as a regular user (not admin) and signs in properly", async () => {
+    const { supabase } = await import("@/integrations/supabase/client");
+
+    const signUpRes = await supabase.auth.signUp({
+      email: "newuser@example.com",
+      password: "StrongPassword123!",
+      options: { data: { display_name: "أحمد محمد" } },
+    });
+
+    expect(signUpRes.error).toBeNull();
+    expect(signUpRes.data.user?.email).toBe("newuser@example.com");
+
+    const { unmount } = renderWithProviders(<Profile />, "/profile");
+    await waitFor(() => {
+      expect(screen.getByText("أحمد محمد")).toBeInTheDocument();
+      expect(screen.getByText("حساب مستخدم")).toBeInTheDocument();
+    });
+
+    // Ensure admin link is NOT shown in Navbar for regular users
+    expect(screen.queryByText("لوحة التحكم")).not.toBeInTheDocument();
+    unmount();
+
+    // Ensure signing out and signing back in preserves regular user role
+    await supabase.auth.signOut();
+    const signInRes = await supabase.auth.signInWithPassword({
+      email: "newuser@example.com",
+      password: "StrongPassword123!",
+    });
+    expect(signInRes.error).toBeNull();
+    expect(signInRes.data.session).not.toBeNull();
   });
 });

@@ -11,6 +11,11 @@ import {
   normalizePath,
 } from "@/lib/site";
 
+export interface SeoBreadcrumbItem {
+  name: string;
+  path: string;
+}
+
 interface SEOProps {
   title?: string;
   description?: string;
@@ -18,6 +23,8 @@ interface SEOProps {
   image?: string;
   noindex?: boolean;
   faqs?: FaqItem[];
+  breadcrumbs?: SeoBreadcrumbItem[];
+  canonicalPath?: string;
 }
 
 const DEFAULT_IMAGE =
@@ -28,9 +35,18 @@ const DEFAULT_IMAGE =
  * Updates <title>, meta description/keywords, robots policy, Open Graph,
  * Twitter card, canonical/hreflang links, and rich Schema.org JSON-LD (@graph).
  */
-export function SEO({ title, description, keywords, image, noindex, faqs }: SEOProps) {
+export function SEO({
+  title,
+  description,
+  keywords,
+  image,
+  noindex,
+  faqs,
+  breadcrumbs,
+  canonicalPath,
+}: SEOProps) {
   const { pathname } = useLocation();
-  const normalizedPath = normalizePath(pathname);
+  const normalizedPath = normalizePath(canonicalPath ?? pathname);
   const routeMeta = ROUTE_SEO_META[normalizedPath];
 
   const finalTitle = title || routeMeta?.title || ROUTE_SEO_META["/"].title;
@@ -45,7 +61,7 @@ export function SEO({ title, description, keywords, image, noindex, faqs }: SEOP
 
   const canonicalUrl = getCanonicalUrl(normalizedPath);
   const img = image ?? DEFAULT_IMAGE;
-  const pageFaqs = faqs ?? (normalizedPath === "/" ? HOME_FAQS : undefined);
+  const pageFaqs = faqs ?? routeMeta?.faqs ?? (normalizedPath === "/" ? HOME_FAQS : undefined);
 
   const breadcrumbItems = [
     {
@@ -56,7 +72,16 @@ export function SEO({ title, description, keywords, image, noindex, faqs }: SEOP
     },
   ];
 
-  if (normalizedPath !== "/" && routeMeta) {
+  if (breadcrumbs && breadcrumbs.length > 0) {
+    breadcrumbs.forEach((b, idx) => {
+      breadcrumbItems.push({
+        "@type": "ListItem",
+        position: idx + 2,
+        name: b.name,
+        item: getCanonicalUrl(b.path),
+      });
+    });
+  } else if (normalizedPath !== "/" && routeMeta) {
     breadcrumbItems.push({
       "@type": "ListItem",
       position: 2,
@@ -82,7 +107,7 @@ export function SEO({ title, description, keywords, image, noindex, faqs }: SEOP
       : null;
 
   const faqSchema =
-    pageFaqs && pageFaqs.length > 0
+    indexable && pageFaqs && pageFaqs.length > 0
       ? {
           "@type": "FAQPage",
           "@id": `${canonicalUrl}#faq`,
@@ -101,6 +126,20 @@ export function SEO({ title, description, keywords, image, noindex, faqs }: SEOP
     "@context": "https://schema.org",
     "@graph": [
       {
+        "@type": "Organization",
+        "@id": `${SITE_URL}/#organization`,
+        name: "نور الإيمان",
+        alternateName: "منصة نور الإيمان الإسلامية",
+        url: `${SITE_URL}/`,
+        logo: {
+          "@type": "ImageObject",
+          "@id": `${SITE_URL}/#logo`,
+          url: img,
+          contentUrl: img,
+          caption: "نور الإيمان",
+        },
+      },
+      {
         "@type": "WebSite",
         "@id": `${SITE_URL}/#website`,
         name: "نور الإيمان",
@@ -108,6 +147,9 @@ export function SEO({ title, description, keywords, image, noindex, faqs }: SEOP
         url: `${SITE_URL}/`,
         inLanguage: "ar",
         description: ROUTE_SEO_META["/"].description,
+        publisher: {
+          "@id": `${SITE_URL}/#organization`,
+        },
       },
       {
         "@type": "WebApplication",
@@ -118,6 +160,9 @@ export function SEO({ title, description, keywords, image, noindex, faqs }: SEOP
         operatingSystem: "All",
         inLanguage: "ar",
         description: ROUTE_SEO_META["/"].description,
+        publisher: {
+          "@id": `${SITE_URL}/#organization`,
+        },
         offers: {
           "@type": "Offer",
           price: "0",
@@ -134,6 +179,16 @@ export function SEO({ title, description, keywords, image, noindex, faqs }: SEOP
         isPartOf: {
           "@id": `${SITE_URL}/#website`,
         },
+        about: {
+          "@id": `${SITE_URL}/#organization`,
+        },
+        ...(breadcrumbItems.length > 1
+          ? {
+              breadcrumb: {
+                "@id": `${canonicalUrl}#breadcrumb`,
+              },
+            }
+          : {}),
       },
       ...(siteNavigationItemList ? [siteNavigationItemList] : []),
       ...(breadcrumbItems.length > 1

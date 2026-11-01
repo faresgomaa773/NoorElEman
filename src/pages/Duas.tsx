@@ -1,5 +1,8 @@
 import { SEO } from "@/components/SEO";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import { DUA_CATEGORY_SLUGS, getDuaCategorySlug } from "@/lib/site";
 import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { BookMarked, Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,11 +22,24 @@ interface Dua {
 }
 
 const Duas = () => {
+  const { categorySlug } = useParams<{ categorySlug?: string }>();
+  const navigate = useNavigate();
   const [duas, setDuas] = useState<Dua[]>(DEFAULT_DUAS);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<string>("all");
+
+  const matchedSlugMeta = categorySlug ? DUA_CATEGORY_SLUGS[categorySlug] : undefined;
+  const [filter, setFilter] = useState<string>(matchedSlugMeta?.category ?? "all");
+
   const { isFavorite, toggleFavorite } = useFavorites();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (matchedSlugMeta) {
+      setFilter(matchedSlugMeta.category);
+    } else if (!categorySlug) {
+      setFilter("all");
+    }
+  }, [categorySlug, matchedSlugMeta]);
 
   useEffect(() => {
     (async () => {
@@ -39,6 +55,18 @@ const Duas = () => {
       }
     })();
   }, []);
+
+  const handleSelectCategory = (cat: string) => {
+    setFilter(cat);
+    if (cat === "all") {
+      navigate("/duas");
+      return;
+    }
+    const slug = getDuaCategorySlug(cat);
+    if (slug) {
+      navigate(`/duas/${slug}`);
+    }
+  };
 
   const handleToggleFavorite = (d: Dua) => {
     const added = toggleFavorite({
@@ -58,15 +86,46 @@ const Duas = () => {
   const categories = Array.from(new Set(duas.map((d) => d.category)));
   const filtered = filter === "all" ? duas : duas.filter((d) => d.category === filter);
 
+  const activeCategoryMeta =
+    filter !== "all"
+      ? Object.values(DUA_CATEGORY_SLUGS).find((item) => item.category === filter)
+      : undefined;
+
   return (
     <Layout>
-      <SEO />
+      <SEO
+        title={activeCategoryMeta?.title}
+        description={activeCategoryMeta?.description}
+        canonicalPath={activeCategoryMeta ? `/duas/${activeCategoryMeta.slug}` : "/duas"}
+        breadcrumbs={
+          activeCategoryMeta
+            ? [
+                { name: "الأدعية المأثورة", path: "/duas" },
+                { name: `أدعية ${activeCategoryMeta.category}`, path: `/duas/${activeCategoryMeta.slug}` },
+              ]
+            : [{ name: "الأدعية المأثورة", path: "/duas" }]
+        }
+      />
       <section className="relative overflow-hidden bg-gradient-to-br from-emerald-700 via-teal-700 to-cyan-800 text-primary-foreground py-16">
         <div className="absolute inset-0 pattern-arabesque opacity-20" />
         <div className="container relative text-center">
+          <PageBreadcrumb
+            items={
+              activeCategoryMeta
+                ? [
+                    { label: "الأدعية المأثورة", to: "/duas" },
+                    { label: `أدعية ${activeCategoryMeta.category}` },
+                  ]
+                : [{ label: "الأدعية المأثورة" }]
+            }
+          />
           <BookMarked className="h-12 w-12 mx-auto mb-4 text-accent" />
-          <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">الأدعية المأثورة</h1>
-          <p className="text-primary-foreground/85">من القرآن الكريم والسنة النبوية الصحيحة</p>
+          <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">
+            {activeCategoryMeta ? `الأدعية المأثورة — ${activeCategoryMeta.category}` : "الأدعية المأثورة"}
+          </h1>
+          <p className="text-primary-foreground/85">
+            {activeCategoryMeta?.description ?? "من القرآن الكريم والسنة النبوية الصحيحة"}
+          </p>
         </div>
       </section>
 
@@ -74,7 +133,8 @@ const Duas = () => {
         <h2 className="sr-only">قائمة الأدعية</h2>
         <div className="flex flex-wrap gap-2 justify-center mb-8">
           <button
-            onClick={() => setFilter("all")}
+            type="button"
+            onClick={() => handleSelectCategory("all")}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-smooth whitespace-nowrap shrink-0 ${
               filter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground hover:bg-muted/70"
             }`}
@@ -84,7 +144,8 @@ const Duas = () => {
           {categories.map((cat) => (
             <button
               key={cat}
-              onClick={() => setFilter(cat)}
+              type="button"
+              onClick={() => handleSelectCategory(cat)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-smooth whitespace-nowrap shrink-0 ${
                 filter === cat ? "bg-primary text-primary-foreground" : "bg-muted text-foreground hover:bg-muted/70"
               }`}

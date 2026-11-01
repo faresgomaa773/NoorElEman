@@ -2,6 +2,8 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 
 const SITE_URL = "https://al-noor-quest.lovable.app";
+const DEFAULT_IMAGE =
+  "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/08546d39-2455-4a48-b81e-8ff8a037e911/id-preview-cfd3ae0f--3668b397-3abf-47a0-8c92-b6878c69e5eb.lovable.app-1776933579072.png";
 const DIST_DIR = join(process.cwd(), "dist");
 const BASE_HTML_PATH = join(DIST_DIR, "index.html");
 
@@ -62,6 +64,107 @@ const PUBLIC_ROUTES = [
   },
 ];
 
+const DESCRIPTIVE_DEEP_ROUTES = [
+  {
+    path: "/quran/1-al-fatiha",
+    title: "سورة الفاتحة مكتوبة كاملة بالرسم العثماني مع التلاوة | نور الإيمان",
+    description: "اقرأ واستمع إلى سورة الفاتحة (مكية - 7 آية) مكتوبة كاملة بالرسم العثماني برواية حفص عن عاصم مع تلاوة لأشهر القراء.",
+    heading: "سورة الفاتحة",
+    parent: { name: "القرآن الكريم", path: "/quran" },
+  },
+  {
+    path: "/quran/2-al-baqarah",
+    title: "سورة البقرة مكتوبة كاملة بالرسم العثماني مع التلاوة | نور الإيمان",
+    description: "اقرأ واستمع إلى سورة البقرة (مدنية - 286 آية) مكتوبة كاملة بالرسم العثماني برواية حفص عن عاصم مع تلاوة لأشهر القراء.",
+    heading: "سورة البقرة",
+    parent: { name: "القرآن الكريم", path: "/quran" },
+  },
+  {
+    path: "/quran/18-al-kahf",
+    title: "سورة الكهف مكتوبة كاملة بالرسم العثماني مع التلاوة | نور الإيمان",
+    description: "اقرأ واستمع إلى سورة الكهف (مكية - 110 آية) مكتوبة كاملة بالرسم العثماني برواية حفص عن عاصم مع تلاوة لأشهر القراء.",
+    heading: "سورة الكهف",
+    parent: { name: "القرآن الكريم", path: "/quran" },
+  },
+  {
+    path: "/quran/36-ya-sin",
+    title: "سورة يس مكتوبة كاملة بالرسم العثماني مع التلاوة | نور الإيمان",
+    description: "اقرأ واستمع إلى سورة يس (مكية - 83 آية) مكتوبة كاملة بالرسم العثماني برواية حفص عن عاصم مع تلاوة لأشهر القراء.",
+    heading: "سورة يس",
+    parent: { name: "القرآن الكريم", path: "/quran" },
+  },
+  {
+    path: "/quran/55-ar-rahman",
+    title: "سورة الرحمن مكتوبة كاملة بالرسم العثماني مع التلاوة | نور الإيمان",
+    description: "اقرأ واستمع إلى سورة الرحمن (مدنية - 78 آية) مكتوبة كاملة بالرسم العثماني برواية حفص عن عاصم مع تلاوة لأشهر القراء.",
+    heading: "سورة الرحمن",
+    parent: { name: "القرآن الكريم", path: "/quran" },
+  },
+  {
+    path: "/quran/56-al-waqia",
+    title: "سورة الواقعة مكتوبة كاملة بالرسم العثماني مع التلاوة | نور الإيمان",
+    description: "اقرأ واستمع إلى سورة الواقعة (مكية - 96 آية) مكتوبة كاملة بالرسم العثماني برواية حفص عن عاصم مع تلاوة لأشهر القراء.",
+    heading: "سورة الواقعة",
+    parent: { name: "القرآن الكريم", path: "/quran" },
+  },
+  {
+    path: "/quran/67-al-mulk",
+    title: "سورة الملك مكتوبة كاملة بالرسم العثماني مع التلاوة | نور الإيمان",
+    description: "اقرأ واستمع إلى سورة الملك (مكية - 30 آية) مكتوبة كاملة بالرسم العثماني برواية حفص عن عاصم مع تلاوة لأشهر القراء.",
+    heading: "سورة الملك",
+    parent: { name: "القرآن الكريم", path: "/quran" },
+  },
+  {
+    path: "/quran/112-al-ikhlas",
+    title: "سورة الإخلاص مكتوبة كاملة بالرسم العثماني مع التلاوة | نور الإيمان",
+    description: "اقرأ واستمع إلى سورة الإخلاص (مكية - 4 آية) مكتوبة كاملة بالرسم العثماني برواية حفص عن عاصم مع تلاوة لأشهر القراء.",
+    heading: "سورة الإخلاص",
+    parent: { name: "القرآن الكريم", path: "/quran" },
+  },
+  {
+    path: "/duas/quranic-duas",
+    title: "أدعية قرآنية مكتوبة من القرآن الكريم | نور الإيمان",
+    description: "جوامع الأدعية القرآنية المباركة المكتوبة بالتشكيل من آيات القرآن الكريم للمغفرة والرحمة والهداية وصلاح الدنيا والآخرة.",
+    heading: "أدعية قرآنية",
+    parent: { name: "الأدعية المأثورة", path: "/duas" },
+  },
+  {
+    path: "/duas/prophetic-duas",
+    title: "أدعية نبوية صحيحة من السنة الشريفة | نور الإيمان",
+    description: "أدعية نبوية جامعة ومأثورة عن النبي ﷺ من الصحيحين وكتب السنة الصحيحة لخير الدنيا والآخرة.",
+    heading: "أدعية نبوية",
+    parent: { name: "الأدعية المأثورة", path: "/duas" },
+  },
+  {
+    path: "/duas/istighfar-forgiveness",
+    title: "أدعية المغفرة والرحمة والاستغفار مكتوبة | نور الإيمان",
+    description: "أفضل صيغ وأدعية الاستغفار والتوبة والمغفرة والرحمة من القرآن الكريم والسنة النبوية الصحيحة.",
+    heading: "أدعية المغفرة والرحمة",
+    parent: { name: "الأدعية المأثورة", path: "/duas" },
+  },
+  {
+    path: "/duas/relief-and-rizq",
+    title: "أدعية الفرج وتفريج الكرب والهم | نور الإيمان",
+    description: "أدعية مأثورة صحيحة لتفريج الهم والكرب وقضاء الدين وتيسير الأمور وطلب الفرج القريب.",
+    heading: "أدعية تفريج الكرب",
+    parent: { name: "الأدعية المأثورة", path: "/duas" },
+  },
+  {
+    path: "/duas/rizq-and-tawfiq",
+    title: "أدعية الرزق والتوفيق والبركة | نور الإيمان",
+    description: "أدعية طلب الرزق الحلال الطيب والعلم النافع والتوفيق والبركة في المال والعمل من السنة النبوية.",
+    heading: "أدعية الرزق والتوفيق",
+    parent: { name: "الأدعية المأثورة", path: "/duas" },
+  },
+  {
+    path: "/duas/healing-and-wellbeing",
+    title: "أدعية الشفاء والعافية والرقية الشرعية | نور الإيمان",
+    description: "أدعية الشفاء للمريض وطلب العافية في البدن والسمع والبصر من السنة النبوية الصحيحة.",
+    heading: "أدعية الشفاء والعافية",
+    parent: { name: "الأدعية المأثورة", path: "/duas" },
+  },
+];
+
 const NOINDEX_ROUTES = [
   {
     path: "/favorites",
@@ -86,14 +189,61 @@ const NOINDEX_ROUTES = [
 ];
 
 function buildRouteHtml(baseHtml, route, indexable = true) {
-  const canonicalUrl = `${SITE_URL}${route.path}`;
+  const canonicalUrl = `${SITE_URL}${route.canonicalPath ?? route.path}`;
   const robots = indexable
     ? "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
     : "noindex, follow";
 
+  const breadcrumbList = [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "الرئيسية",
+      item: `${SITE_URL}/`,
+    },
+  ];
+
+  if (route.parent) {
+    breadcrumbList.push({
+      "@type": "ListItem",
+      position: 2,
+      name: route.parent.name,
+      item: `${SITE_URL}${route.parent.path}`,
+    });
+    if (route.heading) {
+      breadcrumbList.push({
+        "@type": "ListItem",
+        position: 3,
+        name: route.heading,
+        item: canonicalUrl,
+      });
+    }
+  } else if (route.heading) {
+    breadcrumbList.push({
+      "@type": "ListItem",
+      position: 2,
+      name: route.heading,
+      item: canonicalUrl,
+    });
+  }
+
   const schema = {
     "@context": "https://schema.org",
     "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${SITE_URL}/#organization`,
+        name: "نور الإيمان",
+        alternateName: "منصة نور الإيمان الإسلامية",
+        url: `${SITE_URL}/`,
+        logo: {
+          "@type": "ImageObject",
+          "@id": `${SITE_URL}/#logo`,
+          url: DEFAULT_IMAGE,
+          contentUrl: DEFAULT_IMAGE,
+          caption: "نور الإيمان",
+        },
+      },
       {
         "@type": "WebSite",
         "@id": `${SITE_URL}/#website`,
@@ -101,6 +251,9 @@ function buildRouteHtml(baseHtml, route, indexable = true) {
         alternateName: "منصة نور الإيمان الإسلامية",
         url: `${SITE_URL}/`,
         inLanguage: "ar",
+        publisher: {
+          "@id": `${SITE_URL}/#organization`,
+        },
       },
       {
         "@type": "WebApplication",
@@ -110,6 +263,9 @@ function buildRouteHtml(baseHtml, route, indexable = true) {
         applicationCategory: "EducationalApplication",
         operatingSystem: "All",
         inLanguage: "ar",
+        publisher: {
+          "@id": `${SITE_URL}/#organization`,
+        },
         offers: {
           "@type": "Offer",
           price: "0",
@@ -124,26 +280,17 @@ function buildRouteHtml(baseHtml, route, indexable = true) {
         url: canonicalUrl,
         inLanguage: "ar",
         isPartOf: { "@id": `${SITE_URL}/#website` },
+        about: { "@id": `${SITE_URL}/#organization` },
+        ...(indexable && breadcrumbList.length > 1
+          ? { breadcrumb: { "@id": `${canonicalUrl}#breadcrumb` } }
+          : {}),
       },
-      ...(indexable && route.heading
+      ...(indexable && breadcrumbList.length > 1
         ? [
             {
               "@type": "BreadcrumbList",
               "@id": `${canonicalUrl}#breadcrumb`,
-              itemListElement: [
-                {
-                  "@type": "ListItem",
-                  position: 1,
-                  name: "الرئيسية",
-                  item: `${SITE_URL}/`,
-                },
-                {
-                  "@type": "ListItem",
-                  position: 2,
-                  name: route.heading,
-                  item: canonicalUrl,
-                },
-              ],
+              itemListElement: breadcrumbList,
             },
           ]
         : []),
@@ -226,7 +373,7 @@ function buildRouteHtml(baseHtml, route, indexable = true) {
 if (existsSync(BASE_HTML_PATH)) {
   const baseHtml = readFileSync(BASE_HTML_PATH, "utf8");
 
-  for (const route of PUBLIC_ROUTES) {
+  for (const route of [...PUBLIC_ROUTES, ...DESCRIPTIVE_DEEP_ROUTES]) {
     const outPath = join(DIST_DIR, route.path.slice(1), "index.html");
     mkdirSync(dirname(outPath), { recursive: true });
     writeFileSync(outPath, buildRouteHtml(baseHtml, route, true), "utf8");
@@ -251,3 +398,4 @@ if (existsSync(BASE_HTML_PATH)) {
   );
   writeFileSync(join(DIST_DIR, "404.html"), notFoundHtml, "utf8");
 }
+
