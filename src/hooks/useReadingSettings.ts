@@ -34,20 +34,20 @@ export const FONT_SIZE_CLASSES: Record<
   { azkar: string; quran: string }
 > = {
   sm: {
-    azkar: "text-base sm:text-lg md:text-xl leading-[2.0]",
-    quran: "text-xl md:text-2xl leading-[2.3]",
+    azkar: "text-base sm:text-lg md:text-xl leading-[2.1] sm:leading-[2.1] md:leading-[2.15]",
+    quran: "text-xl md:text-2xl leading-[2.4] md:leading-[2.5]",
   },
   md: {
-    azkar: "text-lg sm:text-xl md:text-2xl leading-[2.2]",
-    quran: "text-2xl md:text-3xl leading-[2.6]",
+    azkar: "text-lg sm:text-xl md:text-2xl leading-[2.25] sm:leading-[2.25] md:leading-[2.3]",
+    quran: "text-2xl md:text-3xl leading-[2.65] md:leading-[2.75]",
   },
   lg: {
-    azkar: "text-xl sm:text-2xl md:text-3xl leading-[2.35]",
-    quran: "text-3xl md:text-4xl leading-[2.75]",
+    azkar: "text-xl sm:text-2xl md:text-3xl leading-[2.35] sm:leading-[2.4] md:leading-[2.45]",
+    quran: "text-3xl md:text-4xl leading-[2.8] md:leading-[2.9]",
   },
   xl: {
-    azkar: "text-2xl sm:text-3xl md:text-4xl leading-[2.5]",
-    quran: "text-4xl md:text-5xl leading-[2.9]",
+    azkar: "text-2xl sm:text-3xl md:text-4xl leading-[2.5] sm:leading-[2.55] md:leading-[2.6]",
+    quran: "text-4xl md:text-5xl leading-[2.95] md:leading-[3.05]",
   },
 };
 

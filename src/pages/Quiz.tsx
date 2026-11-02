@@ -1,6 +1,12 @@
 import { SEO } from "@/components/SEO";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
-import { useEffect, useState } from "react";
+import {
+  deduplicateQuestions,
+  loadSeenQuestionIds,
+  saveSeenQuestionIds,
+  selectNonRepeatingQuestions,
+} from "@/lib/quranAndQuizUtils";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Check, X, Sparkles, LogIn, BookOpen, Award, Target } from "lucide-react";
@@ -24,12 +30,22 @@ interface Question {
   explanation: string | null;
 }
 
+const QUIZ_ROUND_SIZE = 10;
+
 const Quiz = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [questions, setQuestions] = useState<Question[]>(() =>
-    [...DEFAULT_QUESTIONS].slice(0, 10)
-  );
+  const questionPoolRef = useRef<Question[]>(deduplicateQuestions(DEFAULT_QUESTIONS));
+  const [questions, setQuestions] = useState<Question[]>(() => {
+    const initialSeen = loadSeenQuestionIds();
+    const { selected, updatedSeenIds } = selectNonRepeatingQuestions({
+      pool: DEFAULT_QUESTIONS,
+      count: QUIZ_ROUND_SIZE,
+      seenIds: initialSeen,
+    });
+    saveSeenQuestionIds(updatedSeenIds);
+    return selected;
+  });
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
@@ -43,28 +59,67 @@ const Quiz = () => {
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  const loadQuestions = async () => {
-    try {
-      const { data, error } = await supabase.rpc("get_public_questions");
-      if (!error && data && data.length > 0) {
-        const shuffled = [...(data as Question[])].sort(() => Math.random() - 0.5).slice(0, 10);
-        setQuestions(shuffled);
-      } else {
-        const shuffled = [...DEFAULT_QUESTIONS].sort(() => Math.random() - 0.5).slice(0, 10);
-        setQuestions(shuffled);
-      }
-    } catch {
-      const shuffled = [...DEFAULT_QUESTIONS].sort(() => Math.random() - 0.5).slice(0, 10);
-      setQuestions(shuffled);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
-    loadQuestions();
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
+
+  const pickFreshRound = useCallback((pool: Question[]) => {
+    if (!isMountedRef.current) return;
+    const seenIds = loadSeenQuestionIds();
+    const { selected: nextRound, updatedSeenIds } = selectNonRepeatingQuestions({
+      pool,
+      count: QUIZ_ROUND_SIZE,
+      seenIds,
+    });
+    saveSeenQuestionIds(updatedSeenIds);
+    setQuestions(nextRound);
+  }, []);
+
+  const loadQuestions = useCallback(
+    async (forceNewRound = false) => {
+      try {
+        const { data, error } = await supabase.rpc("get_public_questions");
+        if (!isMountedRef.current) return;
+        if (!error && Array.isArray(data) && data.length > 0) {
+          const mergedPool = deduplicateQuestions([
+            ...(data as Question[]),
+            ...DEFAULT_QUESTIONS,
+          ]);
+          questionPoolRef.current = mergedPool;
+          if (forceNewRound) {
+            pickFreshRound(mergedPool);
+          }
+        } else {
+          const fallbackPool = deduplicateQuestions(DEFAULT_QUESTIONS);
+          questionPoolRef.current = fallbackPool;
+          if (forceNewRound) {
+            pickFreshRound(fallbackPool);
+          }
+        }
+      } catch {
+        if (!isMountedRef.current) return;
+        const fallbackPool = deduplicateQuestions(DEFAULT_QUESTIONS);
+        questionPoolRef.current = fallbackPool;
+        if (forceNewRound) {
+          pickFreshRound(fallbackPool);
+        }
+      } finally {
+        if (isMountedRef.current && typeof window !== "undefined") {
+          setLoading(false);
+        }
+      }
+    },
+    [pickFreshRound]
+  );
+
+  useEffect(() => {
+    void loadQuestions(false);
+  }, [loadQuestions]);
 
   const current = questions[idx];
 
@@ -162,8 +217,9 @@ const Quiz = () => {
     setBestStreak(0);
     setCorrectCount(0);
     setDone(false);
-    loadQuestions();
+    pickFreshRound(questionPoolRef.current);
   };
+
 
   const options = current
     ? [

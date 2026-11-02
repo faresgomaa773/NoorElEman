@@ -242,4 +242,78 @@ describe("Application Pages & Core Functionality", () => {
     expect(signInRes.error).toBeNull();
     expect(signInRes.data.session).not.toBeNull();
   });
+
+  it("plays Quran ayahs continuously without stopping at ayah boundaries", async () => {
+    const { useQuranAudio } = await import("@/contexts/QuranAudioContext");
+
+    function TestContinuousPlayer() {
+      const audio = useQuranAudio();
+      return (
+        <div>
+          <button
+            type="button"
+            onClick={() =>
+              audio.loadAndPlay({
+                surahName: "الفاتحة",
+                surahNumber: 1,
+                ayahIndex: 0,
+                totalAyahs: 3,
+                audioUrl: "https://cdn.islamic.network/quran/audio/128/ar.husary/1.mp3",
+                reciterName: "محمود خليل الحصري",
+                reciterId: "ar.husary",
+                playlist: [
+                  { numberInSurah: 1, audio: "https://cdn.islamic.network/quran/audio/128/ar.husary/1.mp3" },
+                  { numberInSurah: 2, audio: "https://cdn.islamic.network/quran/audio/128/ar.husary/2.mp3" },
+                  { numberInSurah: 3, audio: "https://cdn.islamic.network/quran/audio/128/ar.husary/3.mp3" },
+                ],
+              })
+            }
+          >
+            بدء التلاوة
+          </button>
+          <button type="button" onClick={() => audio.next()}>
+            التالي
+          </button>
+          <span data-testid="current-ayah">{audio.current ? audio.current.ayahIndex + 1 : 0}</span>
+          <span data-testid="playing-state">{audio.playing ? "playing" : "stopped"}</span>
+        </div>
+      );
+    }
+
+    renderWithProviders(<TestContinuousPlayer />);
+    fireEvent.click(screen.getByText("بدء التلاوة"));
+
+    expect(screen.getByTestId("current-ayah")).toHaveTextContent("1");
+    expect(screen.getByTestId("playing-state")).toHaveTextContent("playing");
+
+    // Advance across ayahs and verify playback stays playing continuously without stopping
+    fireEvent.click(screen.getByText("التالي"));
+    expect(screen.getByTestId("current-ayah")).toHaveTextContent("2");
+    expect(screen.getByTestId("playing-state")).toHaveTextContent("playing");
+
+    fireEvent.click(screen.getByText("التالي"));
+    expect(screen.getByTestId("current-ayah")).toHaveTextContent("3");
+    expect(screen.getByTestId("playing-state")).toHaveTextContent("playing");
+  });
+
+  it("does not repeat Quiz questions across consecutive quiz sessions", async () => {
+    const { unmount } = renderWithProviders(<Quiz />, "/quiz");
+    await waitFor(() => {
+      expect(screen.getByText(/سؤال 1 \//)).toBeInTheDocument();
+    });
+    const firstSessionSeen = JSON.parse(localStorage.getItem("noor-quiz-seen-ids-v1") || "[]") as string[];
+    expect(firstSessionSeen.length).toBe(10);
+    unmount();
+
+    const { unmount: unmount2 } = renderWithProviders(<Quiz />, "/quiz");
+    await waitFor(() => {
+      expect(screen.getByText(/سؤال 1 \//)).toBeInTheDocument();
+    });
+    const secondSessionSeen = JSON.parse(localStorage.getItem("noor-quiz-seen-ids-v1") || "[]") as string[];
+    expect(secondSessionSeen.length).toBe(20);
+    expect(new Set(secondSessionSeen).size).toBe(20);
+    unmount2();
+  });
 });
+
+

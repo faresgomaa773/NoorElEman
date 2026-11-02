@@ -29,3 +29,10 @@ if (typeof window.IntersectionObserver === "undefined") {
     value: MockIntersectionObserver,
   });
 }
+
+if (typeof window.HTMLMediaElement !== "undefined") {
+  window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+  window.HTMLMediaElement.prototype.pause = () => {};
+  window.HTMLMediaElement.prototype.load = () => {};
+}
+
