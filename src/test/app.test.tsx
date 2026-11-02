@@ -314,6 +314,22 @@ describe("Application Pages & Core Functionality", () => {
     expect(new Set(secondSessionSeen).size).toBe(20);
     unmount2();
   });
+
+  it("renders Mushaf index with search and revelation filters and opens illuminated Mushaf frame", async () => {
+    renderWithProviders(<Quran />, "/quran");
+
+    expect(screen.getByText("فهرس السور • المصحف الشريف")).toBeInTheDocument();
+    const searchInput = screen.getByLabelText("ابحث باسم السورة أو رقمها");
+    fireEvent.change(searchInput, { target: { value: "الكهف" } });
+
+    expect(screen.getByText("سُورَةُ الكهف")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("سُورَةُ الكهف"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mushaf-surah-banner")).toBeInTheDocument();
+    });
+  });
 });
+
 
 

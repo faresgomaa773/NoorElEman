@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   clearQuranBookmark,
   deduplicateQuestions,
+  filterSurahs,
   getAyahAudioCandidates,
   getNextContinuousPlaybackTarget,
   getNextSurahNumber,
@@ -14,6 +15,8 @@ import {
   saveSeenQuestionIds,
   selectNonRepeatingQuestions,
   shouldAdvanceAyahEarly,
+  stripLeadingBasmalah,
+  toArabicNumerals,
 } from "../src/lib/quranAndQuizUtils.ts";
 import { DEFAULT_QUESTIONS } from "../src/data/islamicData.ts";
 
@@ -171,5 +174,38 @@ describe("Quran & Quiz Pure Logic (node:test)", () => {
       { type: "next-surah", ayahIndex: 0, surahNumber: 2 }
     );
   });
+
+  it("formats Eastern Arabic numerals, strips duplicate Basmalah in Mushaf view, and filters surahs", () => {
+    assert.equal(toArabicNumerals(1), "١");
+    assert.equal(toArabicNumerals(286), "٢٨٦");
+    assert.equal(toArabicNumerals("114"), "١١٤");
+
+    // Surah 1 keeps Basmalah as Ayah 1
+    assert.equal(
+      stripLeadingBasmalah("بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ", 1, 1),
+      "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ"
+    );
+
+    // Surah 112 Ayah 1 strips leading Basmalah (exact api.alquran.cloud Uthmani string with U+06E1, U+0640, U+0670, and U+06CC)
+    assert.equal(
+      stripLeadingBasmalah("بِسۡمِ ٱللَّهِ ٱلرَّحۡمَـٰنِ ٱلرَّحِیمِ قُلۡ هُوَ ٱللَّهُ أَحَدٌ\n", 112, 1),
+      "قُلۡ هُوَ ٱللَّهُ أَحَدٌ"
+    );
+
+    const sampleSurahs = [
+      { number: 1, name: "سُورَةُ الفاتحة", englishName: "Al-Fatihah", revelationType: "Meccan" },
+      { number: 2, name: "سُورَةُ البقرة", englishName: "Al-Baqarah", revelationType: "Medinan" },
+      { number: 18, name: "سُورَةُ الكهف", englishName: "Al-Kahf", revelationType: "Meccan" },
+    ];
+
+    assert.equal(filterSurahs(sampleSurahs, "", "all").length, 3);
+    assert.equal(filterSurahs(sampleSurahs, "", "Meccan").length, 2);
+    assert.equal(filterSurahs(sampleSurahs, "", "Medinan").length, 1);
+    assert.equal(filterSurahs(sampleSurahs, "الكهف", "all")[0]?.number, 18);
+    assert.equal(filterSurahs(sampleSurahs, "سورة البقرة", "all")[0]?.number, 2);
+    assert.equal(filterSurahs(sampleSurahs, "18", "all")[0]?.number, 18);
+    assert.equal(filterSurahs(sampleSurahs, "١٨", "all")[0]?.number, 18);
+  });
 });
+
 

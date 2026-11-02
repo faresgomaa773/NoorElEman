@@ -6,9 +6,13 @@ import {
   parseSurahNumberFromSlug,
 } from "@/lib/site";
 import {
+  filterSurahs,
+  formatSurahUiName,
   getAyahAudioCandidates,
   getNextSurahNumber,
   getPrevSurahNumber,
+  stripLeadingBasmalah,
+  toArabicNumerals,
 } from "@/lib/quranAndQuizUtils";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -22,6 +26,9 @@ import {
   SkipForward,
   Volume2,
   Repeat,
+  Search,
+  ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -75,6 +82,113 @@ const INITIAL_SURAHS: Surah[] = POPULAR_SURAHS.map((s) => ({
   revelationType: s.revelationType,
 }));
 
+function MushafCornerOrnament({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 48 48"
+      fill="none"
+      aria-hidden="true"
+      className={cn("w-8 h-8 sm:w-10 sm:h-10 pointer-events-none select-none", className)}
+    >
+      <path
+        d="M2 2 H34 L28 8 H10 V26 L4 32 V2 Z"
+        fill="currentColor"
+        fillOpacity="0.22"
+      />
+      <path
+        d="M2 2 H36 M2 2 V36 M7 7 H26 M7 7 V26"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <circle cx="13" cy="13" r="3" fill="currentColor" fillOpacity="0.45" />
+      <path d="M2 2 L16 16" stroke="currentColor" strokeWidth="1.1" strokeOpacity="0.6" />
+    </svg>
+  );
+}
+
+function MushafAyahMedallion({
+  number,
+  active,
+  nightMode,
+}: {
+  number: number;
+  active: boolean;
+  nightMode: boolean;
+}) {
+  return (
+    <span
+      data-testid={`ayah-marker-${number}`}
+      className={cn(
+        "relative inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 mx-1.5 align-middle select-none transition-transform duration-200",
+        active && "scale-110"
+      )}
+    >
+      <svg
+        viewBox="0 0 44 44"
+        fill="none"
+        aria-hidden="true"
+        className={cn(
+          "absolute inset-0 w-full h-full",
+          active
+            ? "text-[#B8860B] dark:text-[#E5C158]"
+            : nightMode
+              ? "text-[#C8A24A]"
+              : "text-[#B68A2E]"
+        )}
+      >
+        {/* Outer 8-pointed Rub el Hizb star */}
+        <rect
+          x="8"
+          y="8"
+          width="28"
+          height="28"
+          rx="2"
+          fill="currentColor"
+          fillOpacity={active ? "0.28" : "0.12"}
+          stroke="currentColor"
+          strokeWidth="1.5"
+        />
+        <rect
+          x="8"
+          y="8"
+          width="28"
+          height="28"
+          rx="2"
+          transform="rotate(45 22 22)"
+          fill="currentColor"
+          fillOpacity={active ? "0.28" : "0.12"}
+          stroke="currentColor"
+          strokeWidth="1.5"
+        />
+        {/* Inner medallion ring */}
+        <circle
+          cx="22"
+          cy="22"
+          r="11.5"
+          fill={active ? (nightMode ? "#283932" : "#FDF3C7") : nightMode ? "#15201C" : "#FFFDF7"}
+          stroke="currentColor"
+          strokeWidth="1.4"
+        />
+      </svg>
+      <span
+        className={cn(
+          "relative z-10 font-display text-xs sm:text-sm font-bold leading-none pt-0.5",
+          active
+            ? nightMode
+              ? "text-[#F3D478]"
+              : "text-[#7A5200]"
+            : nightMode
+              ? "text-[#E5C158]"
+              : "text-[#6E4B0C]"
+        )}
+      >
+        {toArabicNumerals(number)}
+      </span>
+    </span>
+  );
+}
+
 const Quran = () => {
   const { surahSlug } = useParams<{ surahSlug?: string }>();
   const navigate = useNavigate();
@@ -85,6 +199,8 @@ const Quran = () => {
     return INITIAL_SURAHS.find((s) => s.number === requestedSurahNumber) ?? null;
   });
   const [reciter, setReciter] = useState<string>("ar.husary");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [revelationFilter, setRevelationFilter] = useState<"all" | "Meccan" | "Medinan">("all");
   const pendingReciterResumeIdxRef = useRef<number | null>(null);
 
   const audio = useQuranAudio();
@@ -117,6 +233,15 @@ const Quran = () => {
       setSelected(null);
       return;
     }
+    const found = surahs.find((s) => s.number === requestedSurahNumber);
+    if (found) {
+      setSelected(found);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestedSurahNumber]);
+
+  useEffect(() => {
+    if (!requestedSurahNumber) return;
     const found = surahs.find((s) => s.number === requestedSurahNumber);
     if (found) {
       setSelected(found);
@@ -303,9 +428,18 @@ const Quran = () => {
   const { nightMode, fontSize } = settings;
   const quranFontClass = FONT_SIZE_CLASSES[fontSize].quran;
 
-  const cleanSurahName = selected ? selected.name.replace(/^سُورَةُ /, "") : "";
+  const cleanSurahName = selected ? formatSurahUiName(selected.name) : "";
   const activeSurahSlug = selected ? createSurahSlug(selected.number, selected.englishName) : undefined;
   const surahTypeAr = selected ? (selected.revelationType === "Meccan" ? "مكية" : "مدنية") : "";
+
+  const prevSurahObj = selected
+    ? surahs.find((s) => s.number === getPrevSurahNumber(selected.number))
+    : undefined;
+  const nextSurahObj = selected
+    ? surahs.find((s) => s.number === getNextSurahNumber(selected.number))
+    : undefined;
+
+  const filteredSurahs = filterSurahs(surahs, searchQuery, revelationFilter);
 
   return (
     <Layout>
@@ -330,7 +464,7 @@ const Quran = () => {
             : [{ name: "القرآن الكريم", path: "/quran" }]
         }
       />
-      <section className="relative overflow-hidden bg-gradient-to-br from-rose-700 via-pink-700 to-purple-800 text-primary-foreground py-16">
+      <section className="relative overflow-hidden bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-900 text-white py-9 md:py-12 border-b border-[#C8A24A]/30">
         <div className="absolute inset-0 pattern-arabesque opacity-20" />
         <div className="container relative text-center">
           <PageBreadcrumb
@@ -343,11 +477,14 @@ const Quran = () => {
                 : [{ label: "القرآن الكريم" }]
             }
           />
-          <BookOpen className="h-12 w-12 mx-auto mb-4 text-accent" />
-          <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#C8A24A]/20 border border-[#C8A24A]/45 text-[#F3D478] text-xs font-semibold mb-3">
+            <BookOpen className="h-4 w-4" />
+            <span>المصحف الشريف • بالرسم العثماني</span>
+          </div>
+          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-[#FBF6EA] leading-relaxed mb-2">
             {selected ? `سورة ${cleanSurahName}` : "القرآن الكريم"}
           </h1>
-          <p className="text-primary-foreground/85">
+          <p className="text-[#E6DEC8] text-sm sm:text-base">
             {selected
               ? `${surahTypeAr} • ${selected.numberOfAyahs} آية • مصحف التلاوة برواية حفص عن عاصم`
               : "مصحف التلاوة برواية حفص عن عاصم"}
@@ -355,7 +492,7 @@ const Quran = () => {
         </div>
       </section>
 
-      <section className="container py-10">
+      <section className="container py-6 sm:py-8">
         <div className="max-w-4xl mx-auto">
           <ReadingModeToolbar
             settings={settings}
@@ -373,47 +510,64 @@ const Quran = () => {
             className={cn(
               "max-w-4xl mx-auto rounded-3xl transition-colors duration-300",
               nightMode
-                ? cn(NIGHT_MODE_STYLES.sectionStyle, "p-4 sm:p-8")
+                ? cn(NIGHT_MODE_STYLES.sectionStyle, "p-3 sm:p-6")
                 : activeTheme.id !== "default"
-                  ? cn(activeTheme.sectionStyle, "p-4 sm:p-8")
+                  ? cn(activeTheme.sectionStyle, "p-3 sm:p-6")
                   : ""
             )}
           >
-            <button
-              type="button"
-              onClick={closeSurah}
-              className={cn(
-                "mb-6 text-sm hover:underline",
-                nightMode ? "text-[#E5C158]" : "text-primary"
-              )}
-            >
-              ← العودة لقائمة السور
-            </button>
-            <div
-              className={cn(
-                "text-center mb-6 pb-6 border-b",
-                nightMode ? "border-[#283932]" : "border-border"
-              )}
-            >
-              <h2
+            <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+              <button
+                type="button"
+                onClick={closeSurah}
                 className={cn(
-                  "font-quran text-4xl md:text-5xl mb-2",
+                  "text-sm font-medium hover:underline",
                   nightMode ? "text-[#E5C158]" : "text-primary"
                 )}
               >
-                سورة {cleanSurahName}
-              </h2>
-              <p className={nightMode ? NIGHT_MODE_STYLES.mutedText : "text-muted-foreground"}>
-                {surahTypeAr} • {selected.numberOfAyahs} آية
-              </p>
+                ← العودة لقائمة السور
+              </button>
+              <div className="flex items-center gap-2 text-xs">
+                {prevSurahObj && (
+                  <button
+                    type="button"
+                    onClick={() => openSurah(prevSurahObj, reciter)}
+                    className={cn(
+                      "inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border transition-colors",
+                      nightMode
+                        ? "border-[#283932] bg-[#15201C] text-[#EAE3D2] hover:border-[#E5C158]/50"
+                        : "border-border bg-card hover:border-primary/40"
+                    )}
+                  >
+                    <ChevronRight className="h-3.5 w-3.5" />
+                    <span>السورة السابقة</span>
+                  </button>
+                )}
+                {nextSurahObj && (
+                  <button
+                    type="button"
+                    onClick={() => openSurah(nextSurahObj, reciter)}
+                    className={cn(
+                      "inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border transition-colors",
+                      nightMode
+                        ? "border-[#283932] bg-[#15201C] text-[#EAE3D2] hover:border-[#E5C158]/50"
+                        : "border-border bg-card hover:border-primary/40"
+                    )}
+                  >
+                    <span>السورة التالية</span>
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
 
+            {/* Reciter & Continuous Audio Toolbar */}
             <div
               className={cn(
-                "border rounded-xl p-4 mb-6 shadow-soft sticky top-2 z-10 backdrop-blur-sm",
+                "border rounded-xl p-4 mb-5 shadow-soft sticky top-2 z-20 backdrop-blur-sm",
                 nightMode
                   ? "bg-[#17221E]/95 border-[#283932] text-[#EAE3D2]"
-                  : "bg-card/95 border-border"
+                  : "bg-card/95 border-[#C8A24A]/35"
               )}
             >
               <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
@@ -494,82 +648,267 @@ const Quran = () => {
               </div>
             </div>
 
-            {loadingAyahs ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : ayahsError ? (
-              <div className="text-center py-12" role="alert">
-                <p className="text-destructive mb-4">تعذّر تحميل السورة.</p>
-                <Button variant="outline" onClick={() => retryAyahs()}>إعادة المحاولة</Button>
-              </div>
-            ) : (
+            {/* Authentic Illuminated Mushaf Frame (تصميم المصحف الشريف) */}
+            <div
+              data-testid="quran-reading-surface"
+              className={cn(
+                "relative rounded-2xl p-2.5 sm:p-4 md:p-5 border-2 shadow-xl transition-colors duration-300",
+                nightMode
+                  ? "bg-[#111A16] border-[#C8A24A]/45 text-[#EAE3D2]"
+                  : activeTheme.id !== "default"
+                    ? cn(activeTheme.cardStyle, "border-[#C8A24A]/55")
+                    : "bg-[#FBF6EA] border-[#C8A24A]/65 text-[#1F1A14]"
+              )}
+            >
+              {/* Inner Double-Bordered Mushaf Page */}
               <div
-                data-testid="quran-reading-surface"
                 className={cn(
-                  "border rounded-2xl p-6 md:p-10 transition-colors duration-300",
+                  "relative rounded-xl border-4 border-double px-4 py-6 sm:px-8 sm:py-8 md:px-12 md:py-10",
                   nightMode
-                    ? NIGHT_MODE_STYLES.cardStyle
-                    : cn(activeTheme.cardStyle, "shadow-soft")
+                    ? "border-[#C8A24A]/40 bg-[#15201C]/90"
+                    : "border-[#B8892E]/50 bg-[#FDF9F0]/80"
                 )}
               >
-                {selected.number !== 1 && selected.number !== 9 && (
-                  <p
-                    className={cn(
-                      "font-quran text-3xl text-center mb-6",
-                      nightMode ? "text-[#E5C158]" : "text-primary"
-                    )}
-                  >
-                    بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-                  </p>
-                )}
-                <p
+                {/* Four Corner Geometric Arabesques */}
+                <MushafCornerOrnament
                   className={cn(
-                    "font-quran text-justify px-2 transition-all duration-200",
-                    quranFontClass
+                    "absolute top-2 left-2",
+                    nightMode ? "text-[#E5C158]" : "text-[#B68A2E]"
                   )}
-                  dir="rtl"
-                >
-                  {ayahs.map((a, idx) => {
-                    const isAyahActive = idx === currentAyahIdx;
+                />
+                <MushafCornerOrnament
+                  className={cn(
+                    "absolute top-2 right-2 -scale-x-100",
+                    nightMode ? "text-[#E5C158]" : "text-[#B68A2E]"
+                  )}
+                />
+                <MushafCornerOrnament
+                  className={cn(
+                    "absolute bottom-2 left-2 -scale-y-100",
+                    nightMode ? "text-[#E5C158]" : "text-[#B68A2E]"
+                  )}
+                />
+                <MushafCornerOrnament
+                  className={cn(
+                    "absolute bottom-2 right-2 -scale-x-100 -scale-y-100",
+                    nightMode ? "text-[#E5C158]" : "text-[#B68A2E]"
+                  )}
+                />
 
-                    return (
-                      <span
-                        key={a.numberInSurah}
-                        id={`quran-ayah-${a.numberInSurah}`}
-                        data-ayah-number={a.numberInSurah}
-                        onClick={() => handleAyahClick(idx)}
+                {/* Mushaf Top Running Margin Header (رأس صحيفة المصحف) */}
+                <div
+                  className={cn(
+                    "flex items-center justify-between gap-2 pb-3 mb-5 border-b text-xs sm:text-sm font-display",
+                    nightMode
+                      ? "border-[#C8A24A]/30 text-[#E5C158]"
+                      : "border-[#C8A24A]/40 text-[#7A5915]"
+                  )}
+                >
+                  <span className="font-bold">
+                    ۞ سُورَةُ {cleanSurahName}
+                  </span>
+                  <span className="hidden sm:inline text-xs opacity-85">
+                    المُصْحَفُ الشَّرِيفُ • رِوَايَةُ حَفْصٍ عَنْ عَاصِمٍ
+                  </span>
+                  <span className="font-semibold">
+                    {surahTypeAr} • آيَاتُهَا {toArabicNumerals(selected.numberOfAyahs)}
+                  </span>
+                </div>
+
+                {/* Illuminated Surah Title Cartouche (لافتة اسم السورة المزخرفة) */}
+                <div
+                  data-testid="mushaf-surah-banner"
+                  className={cn(
+                    "relative overflow-hidden rounded-xl border-2 mb-6 px-4 py-6 sm:px-6 sm:py-7 text-center shadow-sm",
+                    nightMode
+                      ? "border-[#C8A24A]/55 bg-gradient-to-r from-[#1A2822] via-[#21332B] to-[#1A2822]"
+                      : "border-[#B8892E]/65 bg-gradient-to-r from-[#F4E7C5] via-[#FBF3DC] to-[#F4E7C5]"
+                  )}
+                >
+                  <div className="absolute inset-0 pattern-arabesque opacity-15 pointer-events-none" />
+                  <div className="relative flex items-center justify-between gap-2 sm:gap-4">
+                    {/* Right Medallion */}
+                    <div
+                      className={cn(
+                        "hidden sm:flex flex-col items-center justify-center px-3.5 py-2 rounded-lg border text-xs font-display font-semibold shrink-0",
+                        nightMode
+                          ? "border-[#C8A24A]/45 bg-[#111A16]/80 text-[#E5C158]"
+                          : "border-[#B8892E]/50 bg-[#FFFDF7]/90 text-[#6E4B0C]"
+                      )}
+                    >
+                      <span>ترتيبها</span>
+                      <span className="text-sm font-bold">{toArabicNumerals(selected.number)}</span>
+                    </div>
+
+                    {/* Center Surah Title */}
+                    <div className="flex-1 text-center py-1">
+                      <h2
                         className={cn(
-                          "cursor-pointer rounded-md px-1 transition-colors",
-                          isAyahActive
-                            ? nightMode
-                              ? "bg-[#283932] text-[#E5C158]"
-                              : "bg-accent/30 text-primary"
-                            : nightMode
-                              ? "hover:bg-[#1F2F29]"
-                              : "hover:bg-accent/10"
+                          "font-quran text-3xl sm:text-4xl md:text-5xl font-bold leading-[1.85]",
+                          nightMode ? "text-[#F3D478]" : "text-[#4A3208]"
                         )}
                       >
-                        {a.text}{" "}
+                        سورة {cleanSurahName}
+                      </h2>
+                      <p
+                        className={cn(
+                          "text-xs sm:text-sm mt-1 font-medium",
+                          nightMode ? "text-[#C5BDA8]" : "text-[#6E531D]"
+                        )}
+                      >
+                        {surahTypeAr} • {selected.numberOfAyahs} آية
+                      </p>
+                    </div>
+
+                    {/* Left Medallion */}
+                    <div
+                      className={cn(
+                        "hidden sm:flex flex-col items-center justify-center px-3.5 py-2 rounded-lg border text-xs font-display font-semibold shrink-0",
+                        nightMode
+                          ? "border-[#C8A24A]/45 bg-[#111A16]/80 text-[#E5C158]"
+                          : "border-[#B8892E]/50 bg-[#FFFDF7]/90 text-[#6E4B0C]"
+                      )}
+                    >
+                      <span>آياتها</span>
+                      <span className="text-sm font-bold">
+                        {toArabicNumerals(selected.numberOfAyahs)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ornamental Basmalah (for all surahs except Al-Fatihah #1 and At-Tawbah #9) */}
+                {selected.number !== 1 && selected.number !== 9 && (
+                  <div className="text-center my-6">
+                    <p
+                      className={cn(
+                        "inline-block font-quran text-2xl sm:text-3xl md:text-4xl px-6 py-2.5 rounded-full border leading-[1.8]",
+                        nightMode
+                          ? "text-[#F3D478] border-[#C8A24A]/35 bg-[#111A16]/60"
+                          : "text-[#4A3208] border-[#C8A24A]/45 bg-[#F7EED6]/60"
+                      )}
+                    >
+                      بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                    </p>
+                  </div>
+                )}
+
+                {loadingAyahs ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : ayahsError ? (
+                  <div className="text-center py-12" role="alert">
+                    <p className="text-destructive mb-4">تعذّر تحميل السورة.</p>
+                    <Button variant="outline" onClick={() => retryAyahs()}>إعادة المحاولة</Button>
+                  </div>
+                ) : (
+                  /* Mushaf Continuous Verse Flow */
+                  <p
+                    className={cn(
+                      "font-quran text-justify px-1 sm:px-3 transition-all duration-200",
+                      quranFontClass
+                    )}
+                    dir="rtl"
+                  >
+                    {ayahs.map((a, idx) => {
+                      const isAyahActive = idx === currentAyahIdx;
+                      const displayText = stripLeadingBasmalah(
+                        a.text,
+                        selected.number,
+                        a.numberInSurah
+                      );
+
+                      return (
                         <span
+                          key={a.numberInSurah}
+                          id={`quran-ayah-${a.numberInSurah}`}
+                          data-ayah-number={a.numberInSurah}
+                          onClick={() => handleAyahClick(idx)}
                           className={cn(
-                            "inline-flex items-center justify-center w-8 h-8 mx-1 rounded-full text-sm font-bold border tabular-nums align-middle",
+                            "cursor-pointer rounded-lg px-1.5 py-0.5 transition-colors",
                             isAyahActive
-                              ? "bg-accent text-accent-foreground border-accent shadow-soft"
+                              ? nightMode
+                                ? "bg-[#283932] text-[#F3D478] shadow-sm"
+                                : "bg-[#F3E1AE]/80 text-[#3B2604] shadow-sm"
                               : nightMode
-                                ? "bg-[#24362F] text-[#E5C158] border-[#385247]"
-                                : "bg-accent/15 text-accent-foreground border-accent/30"
+                                ? "hover:bg-[#1F2F29]"
+                                : "hover:bg-[#EFE2BE]/55"
                           )}
                         >
-                          {a.numberInSurah}
-                        </span>{" "}
-                      </span>
-                    );
-                  })}
-                </p>
+                          {displayText}{" "}
+                          <MushafAyahMedallion
+                            number={a.numberInSurah}
+                            active={isAyahActive}
+                            nightMode={nightMode}
+                          />{" "}
+                        </span>
+                      );
+                    })}
+                  </p>
+                )}
+
+                {/* Mushaf Bottom Seal & Surah Navigation */}
+                <div
+                  className={cn(
+                    "mt-8 pt-5 border-t flex flex-col sm:flex-row items-center justify-between gap-4",
+                    nightMode ? "border-[#C8A24A]/30" : "border-[#C8A24A]/40"
+                  )}
+                >
+                  {prevSurahObj ? (
+                    <button
+                      type="button"
+                      onClick={() => openSurah(prevSurahObj, reciter)}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 text-xs sm:text-sm font-display font-semibold px-3.5 py-2 rounded-lg border transition-colors",
+                        nightMode
+                          ? "border-[#C8A24A]/40 bg-[#111A16] text-[#E5C158] hover:bg-[#1E2D27]"
+                          : "border-[#B8892E]/45 bg-[#F6EBD0] text-[#5C3E09] hover:bg-[#EFE0BA]"
+                      )}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                      <span>سورة {formatSurahUiName(prevSurahObj.name)}</span>
+                    </button>
+                  ) : (
+                    <span />
+                  )}
+
+                  <div
+                    className={cn(
+                      "inline-flex items-center gap-2 px-4 py-1 rounded-full border text-xs sm:text-sm font-display font-bold",
+                      nightMode
+                        ? "border-[#C8A24A]/40 bg-[#111A16] text-[#E5C158]"
+                        : "border-[#B8892E]/45 bg-[#F6EBD0] text-[#5C3E09]"
+                    )}
+                  >
+                    <span>۞</span>
+                    <span>صَدَقَ اللَّهُ العَظِيمُ</span>
+                    <span>•</span>
+                    <span>{toArabicNumerals(selected.number)}</span>
+                  </div>
+
+                  {nextSurahObj ? (
+                    <button
+                      type="button"
+                      onClick={() => openSurah(nextSurahObj, reciter)}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 text-xs sm:text-sm font-display font-semibold px-3.5 py-2 rounded-lg border transition-colors",
+                        nightMode
+                          ? "border-[#C8A24A]/40 bg-[#111A16] text-[#E5C158] hover:bg-[#1E2D27]"
+                          : "border-[#B8892E]/45 bg-[#F6EBD0] text-[#5C3E09] hover:bg-[#EFE0BA]"
+                      )}
+                    >
+                      <span>سورة {formatSurahUiName(nextSurahObj.name)}</span>
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                  ) : (
+                    <span />
+                  )}
+                </div>
               </div>
-            )}
+            </div>
           </div>
+
         ) : loading && surahs.length === 0 ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -590,52 +929,177 @@ const Quran = () => {
                   : ""
             )}
           >
-            <h2 className="sr-only">فهرس السور</h2>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {surahs.map((s) => (
-                <button
-                  key={s.number}
-                  type="button"
-                  onClick={() => openSurah(s, reciter)}
-                  className={cn(
-                    "group flex items-center gap-4 border rounded-xl p-4 text-right transition-smooth",
-                    nightMode
-                      ? cn(NIGHT_MODE_STYLES.cardStyle, "hover:border-[#E5C158]/50")
-                      : cn(activeTheme.cardStyle, "hover:border-primary/40 shadow-soft hover:shadow-medium")
-                  )}
-                >
-                  <div className="relative flex h-12 w-12 items-center justify-center shrink-0">
-                    <svg className="absolute inset-0 text-accent" viewBox="0 0 40 40" fill="currentColor">
-                      <path d="M20 2 L37 11 V29 L20 38 L3 29 V11 Z" opacity="0.15" />
-                      <path d="M20 2 L37 11 V29 L20 38 L3 29 V11 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
-                    </svg>
-                    <span
+            {/* Mushaf Index Header, Search & Revelation Filter */}
+            <div
+              className={cn(
+                "rounded-2xl border-2 p-4 sm:p-6 mb-6",
+                nightMode
+                  ? "bg-[#15201C] border-[#C8A24A]/40 text-[#EAE3D2]"
+                  : "bg-[#FBF6EA] border-[#C8A24A]/50 text-[#1F1A14]"
+              )}
+            >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2
+                    className={cn(
+                      "font-display text-xl sm:text-2xl font-bold",
+                      nightMode ? "text-[#F3D478]" : "text-[#4A3208]"
+                    )}
+                  >
+                    فهرس السور • المصحف الشريف
+                  </h2>
+                  <p className={cn("text-xs sm:text-sm mt-1", nightMode ? "text-[#C5BDA8]" : "text-[#6E531D]")}>
+                    اختر السورة للقراءة بالرسم العثماني والاستماع للتلاوة المتصلة
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <div className="relative min-w-[220px]">
+                    <Search
                       className={cn(
-                        "relative font-display font-bold text-sm tabular-nums",
-                        nightMode ? "text-[#E5C158]" : "text-accent-foreground"
+                        "h-4 w-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none",
+                        nightMode ? "text-[#E5C158]" : "text-[#7A5915]"
                       )}
-                    >
-                      {s.number}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3
+                    />
+                    <input
+                      type="search"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="ابحث باسم السورة أو رقمها..."
+                      aria-label="ابحث باسم السورة أو رقمها"
                       className={cn(
-                        "font-quran text-xl transition-smooth truncate",
+                        "w-full rounded-xl border pr-9 pl-3 py-2 text-sm focus:outline-none focus:ring-2",
                         nightMode
-                          ? "text-[#EAE3D2] group-hover:text-[#E5C158]"
-                          : "text-inherit group-hover:text-primary"
+                          ? "bg-[#101815] border-[#283932] text-[#EAE3D2] placeholder:text-[#8E9B94] focus:ring-[#E5C158]/40"
+                          : "bg-[#FFFDF7] border-[#C8A24A]/45 text-[#1F1A14] placeholder:text-[#8A7248] focus:ring-[#B8892E]/40"
                       )}
-                    >
-                      {s.name}
-                    </h3>
-                    <p className={cn("text-xs", nightMode ? NIGHT_MODE_STYLES.mutedText : "text-muted-foreground")}>
-                      {s.numberOfAyahs} آية • {s.revelationType === "Meccan" ? "مكية" : "مدنية"}
-                    </p>
+                    />
                   </div>
-                </button>
-              ))}
+
+                  <div className="inline-flex rounded-xl border p-1 gap-1 bg-black/5 dark:bg-white/5 border-[#C8A24A]/35">
+                    {(
+                      [
+                        { id: "all", label: "الكل" },
+                        { id: "Meccan", label: "مكية" },
+                        { id: "Medinan", label: "مدنية" },
+                      ] as const
+                    ).map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setRevelationFilter(tab.id)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors",
+                          revelationFilter === tab.id
+                            ? nightMode
+                              ? "bg-[#E5C158] text-[#111A16]"
+                              : "bg-[#6E4B0C] text-[#FFFDF7]"
+                            : nightMode
+                              ? "text-[#EAE3D2] hover:bg-[#1E2D27]"
+                              : "text-[#5C3E09] hover:bg-[#EFE2BE]"
+                        )}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
+
+            {filteredSurahs.length === 0 ? (
+              <div className="text-center py-12">
+                <p className={cn("text-sm mb-3", nightMode ? NIGHT_MODE_STYLES.mutedText : "text-muted-foreground")}>
+                  لا توجد سورة مطابقة لبحثك «{searchQuery}».
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setRevelationFilter("all");
+                  }}
+                >
+                  عرض جميع السور
+                </Button>
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {filteredSurahs.map((s) => (
+                  <button
+                    key={s.number}
+                    type="button"
+                    onClick={() => openSurah(s, reciter)}
+                    className={cn(
+                      "group relative flex items-center gap-4 border-2 rounded-xl p-4 text-right transition-smooth overflow-hidden",
+                      nightMode
+                        ? "bg-[#15201C] border-[#283932] hover:border-[#E5C158]/60 text-[#EAE3D2]"
+                        : activeTheme.id !== "default"
+                          ? cn(activeTheme.cardStyle, "hover:border-[#B8892E]/60 shadow-soft")
+                          : "bg-[#FBF6EA] border-[#C8A24A]/40 hover:border-[#B8892E] shadow-soft hover:shadow-medium text-[#1F1A14]"
+                    )}
+                  >
+                    {/* Ornate 8-Pointed Rub el Hizb Surah Number Medallion */}
+                    <div className="relative flex h-12 w-12 items-center justify-center shrink-0">
+                      <svg
+                        className={cn(
+                          "absolute inset-0 w-full h-full transition-transform duration-300 group-hover:rotate-12",
+                          nightMode ? "text-[#E5C158]" : "text-[#B68A2E]"
+                        )}
+                        viewBox="0 0 44 44"
+                        fill="none"
+                      >
+                        <rect
+                          x="8"
+                          y="8"
+                          width="28"
+                          height="28"
+                          rx="2"
+                          fill="currentColor"
+                          fillOpacity="0.14"
+                          stroke="currentColor"
+                          strokeWidth="1.4"
+                        />
+                        <rect
+                          x="8"
+                          y="8"
+                          width="28"
+                          height="28"
+                          rx="2"
+                          transform="rotate(45 22 22)"
+                          fill="currentColor"
+                          fillOpacity="0.14"
+                          stroke="currentColor"
+                          strokeWidth="1.4"
+                        />
+                      </svg>
+                      <span
+                        className={cn(
+                          "relative font-display font-bold text-sm tabular-nums",
+                          nightMode ? "text-[#F3D478]" : "text-[#5C3E09]"
+                        )}
+                      >
+                        {toArabicNumerals(s.number)}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3
+                        className={cn(
+                          "font-quran text-xl transition-smooth truncate",
+                          nightMode
+                            ? "text-[#EAE3D2] group-hover:text-[#F3D478]"
+                            : "text-[#2B1E08] group-hover:text-primary"
+                        )}
+                      >
+                        {s.name}
+                      </h3>
+                      <p className={cn("text-xs", nightMode ? NIGHT_MODE_STYLES.mutedText : "text-[#6E531D]")}>
+                        {toArabicNumerals(s.numberOfAyahs)} آية • {s.revelationType === "Meccan" ? "مكية" : "مدنية"}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </section>
@@ -644,5 +1108,6 @@ const Quran = () => {
 };
 
 export default Quran;
+
 
 

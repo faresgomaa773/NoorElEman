@@ -154,13 +154,15 @@ export function getNextContinuousPlaybackTarget(params: {
 export function normalizeQuestionText(text: string): string {
   return text
     .normalize("NFKC")
-    // Strip Arabic diacritics (tashkeel) and tatweel
-    .replace(/[\u064B-\u065F\u0670\u0640]/g, "")
-    // Normalize alef variants
-    .replace(/[أإآ]/g, "ا")
-    // Normalize teh marbuta and alef maksura
+    // Strip BOM and zero-width formatting characters (present in api.alquran.cloud ayah 1)
+    .replace(/[\uFEFF\u200B-\u200F\u061C]/g, "")
+    // Strip Arabic diacritics (tashkeel), Quranic annotation signs, and tatweel
+    .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, "")
+    // Normalize alef variants including Uthmani alif wasla (ٱ)
+    .replace(/[أإآٱ]/g, "ا")
+    // Normalize teh marbuta, alef maksura, and Farsi yeh (U+06CC used in Uthmani Quran editions)
     .replace(/ة/g, "ه")
-    .replace(/ى/g, "ي")
+    .replace(/[ىی]/g, "ي")
     // Strip punctuation Marks
     .replace(/[؟?!.,،؛:"'«»()[\]\-_]/g, " ")
     .replace(/\s+/g, " ")
@@ -293,3 +295,80 @@ export function saveSeenQuestionIds(
     // Ignore quota errors
   }
 }
+
+const EASTERN_ARABIC_DIGITS = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"] as const;
+
+export function toArabicNumerals(value: number | string): string {
+  return String(value).replace(/\d/g, (digit) => EASTERN_ARABIC_DIGITS[Number(digit)] ?? digit);
+}
+
+export function stripLeadingBasmalah(
+  text: string,
+  surahNumber: number,
+  numberInSurah: number
+): string {
+  if (surahNumber === 1 || surahNumber === 9 || numberInSurah !== 1) {
+    return text;
+  }
+  const trimmed = text.replace(/^[\uFEFF\u200B-\u200F\u061C\s]+/, "").trim();
+  const tokens = trimmed.split(/\s+/);
+  if (tokens.length > 4) {
+    const toBaseArabic = (word: string) =>
+      word
+        .replace(/[أإآٱ]/g, "ا")
+        .replace(/[ىی]/g, "ي")
+        .replace(/[^\u0621-\u063A\u0641-\u064A]/g, "");
+    const firstFourBase = tokens.slice(0, 4).map(toBaseArabic).join(" ");
+    if (firstFourBase === "بسم الله الرحمن الرحيم") {
+      return tokens.slice(4).join(" ").trim();
+    }
+  }
+  return text;
+}
+
+export function formatSurahUiName(rawName: string): string {
+  return rawName
+    .replace(/^سُورَةُ\s*/, "")
+    .replace(/\u06E1/g, "\u0652")
+    .replace(/\u0671/g, "ا")
+    .trim();
+}
+
+
+export function filterSurahs<
+  T extends {
+    number: number;
+    name: string;
+    englishName: string;
+    revelationType: string;
+  }
+>(
+  surahs: readonly T[],
+  searchQuery: string,
+  revelationFilter: "all" | "Meccan" | "Medinan" = "all"
+): T[] {
+  const normalizedQuery = normalizeQuestionText(searchQuery).replace(/^سوره\s+/, "").trim();
+
+  return surahs.filter((surah) => {
+    if (revelationFilter !== "all" && surah.revelationType !== revelationFilter) {
+      return false;
+    }
+    if (!normalizedQuery) {
+      return true;
+    }
+    const cleanArabicName = normalizeQuestionText(surah.name.replace(/^سُورَةُ\s*/, ""));
+    const fullArabicName = normalizeQuestionText(surah.name);
+    const english = surah.englishName.toLowerCase();
+    const numStr = String(surah.number);
+    const arabicNumStr = toArabicNumerals(surah.number);
+
+    return (
+      cleanArabicName.includes(normalizedQuery) ||
+      fullArabicName.includes(normalizedQuery) ||
+      english.includes(normalizedQuery) ||
+      numStr === normalizedQuery ||
+      arabicNumStr === searchQuery.trim()
+    );
+  });
+}
+
