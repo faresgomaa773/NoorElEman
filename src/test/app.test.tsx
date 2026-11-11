@@ -329,7 +329,31 @@ describe("Application Pages & Core Functionality", () => {
       expect(screen.getByTestId("mushaf-surah-banner")).toBeInTheDocument();
     });
   });
+
+  it("renders expanded Morning Azkar (22 items) and Duas (36 items across 8 categories) with search filtering", async () => {
+    const { unmount } = renderWithProviders(<Morning />, "/morning");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("azkar-progress-summary")).toHaveTextContent("22");
+    });
+
+    const azkarSearch = screen.getByLabelText("ابحث في الأذكار");
+    fireEvent.change(azkarSearch, { target: { value: "سيد الاستغفار" } });
+    expect(screen.getByText(/سيد الاستغفار/)).toBeInTheDocument();
+    unmount();
+
+    renderWithProviders(<Duas />, "/duas");
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "الوالدين والأهل" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "أدعية اليوم والعبادات" })).toBeInTheDocument();
+    });
+
+    const duaSearch = screen.getByLabelText("ابحث في الأدعية");
+    fireEvent.change(duaSearch, { target: { value: "الاستخارة" } });
+    expect(screen.getByText("دعاء الاستخارة")).toBeInTheDocument();
+  });
 });
+
 
 
 

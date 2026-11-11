@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Sun, RotateCcw, Check, Heart } from "lucide-react";
+import { Sun, RotateCcw, Check, Heart, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_AZKAR } from "@/data/islamicData";
 import { Layout } from "@/components/Layout";
 import { SmartLink } from "@/components/SmartLink";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import {
   FONT_SIZE_CLASSES,
@@ -16,6 +17,7 @@ import {
 } from "@/hooks/useReadingSettings";
 import { useFavorites } from "@/hooks/useFavorites";
 import { ReadingModeToolbar } from "@/components/ReadingModeToolbar";
+import { filterAzkar, mergeUniqueAzkar } from "@/lib/quranAndQuizUtils";
 import { cn } from "@/lib/utils";
 
 interface Zikr {
@@ -36,6 +38,7 @@ interface Props {
 
 export function AzkarPage({ category, title, subtitle, Icon, gradient }: Props) {
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   const { isFavorite, toggleFavorite } = useFavorites();
   const {
@@ -49,10 +52,15 @@ export function AzkarPage({ category, title, subtitle, Icon, gradient }: Props) 
     resetSettings,
   } = useReadingSettings();
 
-  const { data: azkar = [], isPending: loading, isError, refetch } = useQuery<Zikr[]>({
+  const defaultCategoryAzkar = useMemo(
+    () => DEFAULT_AZKAR.filter((z) => z.category === category),
+    [category]
+  );
+
+  const { data: azkar = defaultCategoryAzkar, isPending: loading, isError, refetch } = useQuery<Zikr[]>({
     queryKey: ["azkar", category],
     staleTime: 5 * 60 * 1000,
-    placeholderData: () => DEFAULT_AZKAR.filter((z) => z.category === category),
+    placeholderData: () => defaultCategoryAzkar,
     queryFn: async ({ signal }) => {
       try {
         const { data, error } = await supabase
@@ -61,13 +69,30 @@ export function AzkarPage({ category, title, subtitle, Icon, gradient }: Props) 
           .eq("category", category)
           .order("display_order")
           .abortSignal(signal);
-        if (!error && data && data.length > 0) return data;
+        if (!error && data && data.length > 0) {
+          return mergeUniqueAzkar(defaultCategoryAzkar, data as Zikr[]);
+        }
       } catch {
         // Fallback to local authentic Azkar
       }
-      return DEFAULT_AZKAR.filter((z) => z.category === category);
+      return defaultCategoryAzkar;
     },
   });
+
+  const filteredAzkar = useMemo(
+    () => filterAzkar(azkar, searchQuery),
+    [azkar, searchQuery]
+  );
+
+  const completedCount = useMemo(
+    () => azkar.filter((z) => (counts[z.id] ?? 0) >= z.repeat_count).length,
+    [azkar, counts]
+  );
+
+  const hasAnyProgress = useMemo(
+    () => Object.values(counts).some((c) => c > 0),
+    [counts]
+  );
 
   const increment = (id: string, max: number) => {
     setCounts((prev) => {
@@ -81,6 +106,10 @@ export function AzkarPage({ category, title, subtitle, Icon, gradient }: Props) 
   };
 
   const reset = (id: string) => setCounts((p) => ({ ...p, [id]: 0 }));
+  const resetAll = () => {
+    setCounts({});
+    toast({ title: "تم تصفير العدّادات", description: "يمكنك البدء من جديد" });
+  };
 
   const handleToggleFavorite = (z: Zikr) => {
     const added = toggleFavorite({
@@ -158,6 +187,60 @@ export function AzkarPage({ category, title, subtitle, Icon, gradient }: Props) 
             onReset={resetSettings}
           />
 
+          {/* Search and session progress bar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="ابحث في الأذكار أو الفضل أو المصدر..."
+                aria-label="ابحث في الأذكار"
+                className={cn(
+                  "pr-9 pl-9 h-10 rounded-xl",
+                  nightMode && "bg-[#15241F] border-[#263B33] text-[#EAE3D2] placeholder:text-[#8FA39A]"
+                )}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  aria-label="مسح البحث"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            <div
+              className={cn(
+                "flex items-center justify-between sm:justify-end gap-3 rounded-xl border px-3.5 py-2 text-xs sm:text-sm shrink-0",
+                nightMode
+                  ? "bg-[#15241F] border-[#263B33] text-[#EAE3D2]"
+                  : "bg-muted/60 border-border text-foreground"
+              )}
+              data-testid="azkar-progress-summary"
+            >
+              <span className="font-medium tabular-nums">
+                أتممت <strong className="text-primary font-bold">{completedCount}</strong> من{" "}
+                <strong className="font-bold">{azkar.length}</strong> ذكر
+              </span>
+              {hasAnyProgress && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={resetAll}
+                  className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  تصفير الكل
+                </Button>
+              )}
+            </div>
+          </div>
+
           {loading ? (
             <div className="text-center text-muted-foreground py-12">جاري التحميل...</div>
           ) : isError ? (
@@ -165,11 +248,13 @@ export function AzkarPage({ category, title, subtitle, Icon, gradient }: Props) 
               <p className="text-destructive mb-4">تعذّر تحميل الأذكار، حاول مرة أخرى.</p>
               <Button variant="outline" onClick={() => refetch()}>إعادة المحاولة</Button>
             </div>
-          ) : azkar.length === 0 ? (
-            <div className="text-center text-muted-foreground py-12">لا توجد أذكار حالياً.</div>
+          ) : filteredAzkar.length === 0 ? (
+            <div className="text-center text-muted-foreground py-12">
+              {searchQuery ? "لا توجد أذكار مطابقة لبحثك." : "لا توجد أذكار حالياً."}
+            </div>
           ) : (
             <div className="grid gap-4 sm:gap-5">
-              {azkar.map((z, idx) => {
+              {filteredAzkar.map((z, idx) => {
                 const count = counts[z.id] ?? 0;
                 const done = count >= z.repeat_count;
                 const progress = (count / z.repeat_count) * 100;

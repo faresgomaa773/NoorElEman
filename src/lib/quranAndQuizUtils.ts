@@ -372,3 +372,180 @@ export function filterSurahs<
   });
 }
 
+export function mergeUniqueAzkar<
+  T extends {
+    id: string;
+    text: string;
+    repeat_count: number;
+    virtue: string | null;
+    source: string | null;
+  }
+>(defaultItems: readonly T[], remoteOrStoredItems: readonly T[] = []): T[] {
+  const seenIds = new Set<string>();
+  const seenTexts = new Set<string>();
+  const result: T[] = [];
+
+  const stripBasmalahPrefix = (norm: string) =>
+    norm.replace(/^بسم الله الرحمن الرحيم\s+/, "").trim();
+
+  const isDuplicateOfExisting = (norm: string) => {
+    if (seenTexts.has(norm)) return true;
+    const core = stripBasmalahPrefix(norm);
+    for (const existing of seenTexts) {
+      const existingCore = stripBasmalahPrefix(existing);
+      if (core === existingCore) return true;
+      if (
+        core.length >= 25 &&
+        existingCore.length >= 25 &&
+        core.slice(0, 25) === existingCore.slice(0, 25)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  for (const item of [...defaultItems, ...remoteOrStoredItems]) {
+    if (!item || typeof item.id !== "string" || typeof item.text !== "string") continue;
+    const norm = normalizeQuestionText(item.text);
+    if (!norm) continue;
+    if (seenIds.has(item.id) || isDuplicateOfExisting(norm)) continue;
+    seenIds.add(item.id);
+    seenTexts.add(norm);
+    result.push(item);
+  }
+
+  return result;
+}
+
+const CANONICAL_DUA_CATEGORY_MAP: Record<string, string> = {
+  "أدعية قرآنية": "أدعية قرآنية",
+  "قرآنية": "أدعية قرآنية",
+  "أدعية نبوية": "أدعية نبوية",
+  "نبوية": "أدعية نبوية",
+  "الهداية": "أدعية نبوية",
+  "المغفرة والرحمة": "المغفرة والرحمة",
+  "الاستغفار": "المغفرة والرحمة",
+  "التوبة": "المغفرة والرحمة",
+  "أدعية للميت": "المغفرة والرحمة",
+  "تفريج الكرب": "تفريج الكرب",
+  "الفرج والرزق": "تفريج الكرب",
+  "الكرب والهم": "تفريج الكرب",
+  "الرزق والتوفيق": "الرزق والتوفيق",
+  "الرزق": "الرزق والتوفيق",
+  "الدراسة والامتحان": "الرزق والتوفيق",
+  "الشفاء والعافية": "الشفاء والعافية",
+  "الشفاء": "الشفاء والعافية",
+  "المرض": "الشفاء والعافية",
+  "الوالدين والأهل": "الوالدين والأهل",
+  "الوالدين": "الوالدين والأهل",
+  "الزواج والذرية": "الوالدين والأهل",
+  "أدعية اليوم والعبادات": "أدعية اليوم والعبادات",
+  "يومية": "أدعية اليوم والعبادات",
+  "أدعية يومية": "أدعية اليوم والعبادات",
+};
+
+export function normalizeDuaCategory(category: string): string {
+  const trimmed = category.trim();
+  return CANONICAL_DUA_CATEGORY_MAP[trimmed] ?? trimmed;
+}
+
+export function mergeUniqueDuas<
+  T extends {
+    id: string;
+    title: string;
+    text: string;
+    category: string;
+    source: string | null;
+  }
+>(defaultItems: readonly T[], remoteOrStoredItems: readonly T[] = []): T[] {
+  const seenIds = new Set<string>();
+  const seenTexts = new Set<string>();
+  const seenTitles = new Set<string>();
+  const result: T[] = [];
+
+  const isDuplicateText = (normText: string) => {
+    if (seenTexts.has(normText)) return true;
+    for (const existing of seenTexts) {
+      if (
+        normText.length >= 25 &&
+        existing.length >= 25 &&
+        normText.slice(0, 25) === existing.slice(0, 25)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  for (const item of [...defaultItems, ...remoteOrStoredItems]) {
+    if (!item || typeof item.id !== "string" || typeof item.text !== "string" || typeof item.title !== "string") {
+      continue;
+    }
+    const normText = normalizeQuestionText(item.text);
+    const normTitle = normalizeQuestionText(item.title);
+    if (!normText) continue;
+    if (seenIds.has(item.id) || isDuplicateText(normText) || (normTitle && seenTitles.has(normTitle))) {
+      continue;
+    }
+    seenIds.add(item.id);
+    seenTexts.add(normText);
+    if (normTitle) seenTitles.add(normTitle);
+    result.push({
+      ...item,
+      category: normalizeDuaCategory(item.category),
+    });
+  }
+
+  return result;
+}
+
+export function filterAzkar<
+  T extends {
+    text: string;
+    virtue?: string | null;
+    source?: string | null;
+  }
+>(items: readonly T[], searchQuery: string): T[] {
+  const normQuery = normalizeQuestionText(searchQuery);
+  if (!normQuery) return [...items];
+  return items.filter((item) => {
+    const normText = normalizeQuestionText(item.text);
+    const normVirtue = item.virtue ? normalizeQuestionText(item.virtue) : "";
+    const normSource = item.source ? normalizeQuestionText(item.source) : "";
+    return (
+      normText.includes(normQuery) ||
+      normVirtue.includes(normQuery) ||
+      normSource.includes(normQuery)
+    );
+  });
+}
+
+export function filterDuas<
+  T extends {
+    title: string;
+    text: string;
+    category: string;
+    source?: string | null;
+  }
+>(items: readonly T[], categoryFilter: string = "all", searchQuery: string = ""): T[] {
+  const normQuery = normalizeQuestionText(searchQuery);
+  return items.filter((item) => {
+    if (categoryFilter !== "all" && item.category !== categoryFilter) {
+      return false;
+    }
+    if (!normQuery) return true;
+    const normTitle = normalizeQuestionText(item.title);
+    const normText = normalizeQuestionText(item.text);
+    const normCat = normalizeQuestionText(item.category);
+    const normSource = item.source ? normalizeQuestionText(item.source) : "";
+    return (
+      normTitle.includes(normQuery) ||
+      normText.includes(normQuery) ||
+      normCat.includes(normQuery) ||
+      normSource.includes(normQuery)
+    );
+  });
+}
+
+

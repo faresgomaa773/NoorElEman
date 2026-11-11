@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import {
   clearQuranBookmark,
   deduplicateQuestions,
+  filterAzkar,
+  filterDuas,
   filterSurahs,
   getAyahAudioCandidates,
   getNextContinuousPlaybackTarget,
@@ -10,6 +12,8 @@ import {
   getPrevSurahNumber,
   loadQuranBookmark,
   loadSeenQuestionIds,
+  mergeUniqueAzkar,
+  mergeUniqueDuas,
   normalizeQuestionText,
   saveQuranBookmark,
   saveSeenQuestionIds,
@@ -18,7 +22,7 @@ import {
   stripLeadingBasmalah,
   toArabicNumerals,
 } from "../src/lib/quranAndQuizUtils.ts";
-import { DEFAULT_QUESTIONS } from "../src/data/islamicData.ts";
+import { DEFAULT_AZKAR, DEFAULT_DUAS, DEFAULT_QUESTIONS } from "../src/data/islamicData.ts";
 
 function createMemoryStorage() {
   const map = new Map<string, string>();
@@ -206,6 +210,38 @@ describe("Quran & Quiz Pure Logic (node:test)", () => {
     assert.equal(filterSurahs(sampleSurahs, "18", "all")[0]?.number, 18);
     assert.equal(filterSurahs(sampleSurahs, "١٨", "all")[0]?.number, 18);
   });
+
+  it("provides 44 authentic Azkar (22 morning + 22 evening) and 36 Duas across 8 categories with deduplicated merge and search", () => {
+    const morning = DEFAULT_AZKAR.filter((z) => z.category === "morning");
+    const evening = DEFAULT_AZKAR.filter((z) => z.category === "evening");
+    assert.equal(morning.length, 22);
+    assert.equal(evening.length, 22);
+    assert.equal(DEFAULT_AZKAR.length, 44);
+
+    assert.equal(DEFAULT_DUAS.length, 36);
+    const categories = new Set(DEFAULT_DUAS.map((d) => d.category));
+    assert.equal(categories.size, 8);
+
+    // Merging partial remote data with default data keeps all defaults without duplicating existing items
+    const mergedAzkar = mergeUniqueAzkar(morning, [
+      { id: "remote-1", text: morning[0].text, repeat_count: 1, virtue: null, source: null },
+      { id: "remote-custom", text: "سبحان الله العظيم وبحمده", repeat_count: 3, virtue: "فضل عظيم", source: "صحيح" },
+    ]);
+    assert.equal(mergedAzkar.length, 23);
+
+    const mergedDuas = mergeUniqueDuas(DEFAULT_DUAS, [
+      { id: "remote-dua-1", title: "نسخة مكررة", text: DEFAULT_DUAS[0].text, category: "أدعية قرآنية", source: null },
+      { id: "remote-dua-new", title: "دعاء مضاف", text: "اللهم زدنا ولا تنقصنا", category: "أدعية نبوية", source: "رواه الترمذي" },
+    ]);
+    assert.equal(mergedDuas.length, 37);
+
+    // Search filters Azkar and Duas ignoring diacritics
+    assert.ok(filterAzkar(morning, "آية الكرسي").length >= 1);
+    assert.ok(filterDuas(DEFAULT_DUAS, "all", "الاستخارة").length >= 1);
+    assert.equal(filterDuas(DEFAULT_DUAS, "الوالدين والأهل", "").length, 3);
+    assert.equal(filterDuas(DEFAULT_DUAS, "أدعية اليوم والعبادات", "").length, 3);
+  });
 });
+
 
 
