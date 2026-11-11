@@ -34,6 +34,14 @@
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://al-noor-quest.lovable.app/hadith</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://al-noor-quest.lovable.app/hadith" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://al-noor-quest.lovable.app/hadith" />
+    <lastmod>2026-05-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>https://al-noor-quest.lovable.app/quran</loc>
     <xhtml:link rel="alternate" hreflang="ar" href="https://al-noor-quest.lovable.app/quran" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://al-noor-quest.lovable.app/quran" />

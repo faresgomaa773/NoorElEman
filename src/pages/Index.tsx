@@ -1,8 +1,8 @@
 import { SEO } from "@/components/SEO";
-import { HOME_FAQS, POPULAR_SURAHS, DUA_CATEGORY_SLUGS } from "@/lib/site";
+import { HOME_FAQS, POPULAR_SURAHS, DUA_CATEGORY_SLUGS, HADITH_CATEGORY_SLUGS } from "@/lib/site";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sun, Moon, BookMarked, BookOpen, Trophy, Sparkles, ArrowLeft, Calendar, CircleDot, Heart, HelpCircle } from "lucide-react";
+import { Sun, Moon, BookMarked, ScrollText, BookOpen, Trophy, Sparkles, ArrowLeft, Calendar, CircleDot, Heart, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/Layout";
 import { DailyDhikrCard } from "@/components/DailyDhikrCard";
@@ -13,7 +13,8 @@ const features = [
   { to: "/morning", title: "أذكار الصباح", desc: "احفظ يومك بأذكار الصباح المباركة مكتوبة كاملة من حصن المسلم", cta: "تصفّح أذكار الصباح", icon: Sun, color: "from-amber-400 to-orange-500" },
   { to: "/evening", title: "أذكار المساء", desc: "اختم يومك بذكر الله والاستغفار مع عدّاد التكرار التفاعلي", cta: "تصفّح أذكار المساء", icon: Moon, color: "from-indigo-500 to-purple-600" },
   { to: "/duas", title: "الأدعية المأثورة", desc: "أدعية صحيحة من القرآن والسنة للفرج والرزق والشفاء والاستغفار", cta: "اقرأ الأدعية المأثورة", icon: BookMarked, color: "from-emerald-500 to-teal-600" },
-  { to: "/favorites", title: "مفضلتك", desc: "الأذكار والأدعية التي حفظتها للرجوع السريع في أي وقت", cta: "افتح قائمة مفضلتك", icon: Heart, color: "from-rose-500 to-red-600" },
+  { to: "/hadith", title: "كتب الحديث الشريف", desc: "الكتب التسعة ودواوين السنة كاملة (صحيح البخاري ومسلم والسنن الأربعة والموطأ والأربعون النووية)", cta: "تصفّح كتب الحديث الكاملة", icon: ScrollText, color: "from-teal-600 to-emerald-700" },
+  { to: "/favorites", title: "مفضلتك", desc: "الأذكار والأدعية والأحاديث التي حفظتها للرجوع السريع في أي وقت", cta: "افتح قائمة مفضلتك", icon: Heart, color: "from-rose-500 to-red-600" },
   { to: "/tasbih", title: "السبحة الإلكترونية", desc: "سبّح واذكر الله وتابع مجموع تسبيحاتك اليومية بسهولة", cta: "ابدأ التسبيح الآن", icon: CircleDot, color: "from-amber-500 to-rose-600" },
   { to: "/quran", title: "القرآن الكريم", desc: "القرآن كاملاً بالرسم العثماني مع التلاوة ووضع القراءة المريح", cta: "تلاوة وقراءة القرآن الكريم", icon: BookOpen, color: "from-rose-500 to-pink-600" },
   { to: "/quiz", title: "الاختبارات الدينية", desc: "اختبر معلوماتك الإسلامية في القرآن والسيرة والفقه واجمع النقاط", cta: "ابدأ الاختبار الديني", icon: Trophy, color: "from-yellow-500 to-amber-600" },
@@ -197,7 +198,7 @@ const Index = () => {
             </div>
           </div>
 
-          <div>
+          <div className="mb-8">
             <h3 className="font-display text-base font-bold text-foreground mb-3 flex items-center gap-2">
               <BookMarked className="h-4 w-4 text-primary" />
               <span>تصنيفات الأدعية المأثورة</span>
@@ -211,6 +212,25 @@ const Index = () => {
                   className="rounded-xl border border-border bg-background/70 px-4 py-2 text-xs sm:text-sm font-medium hover:border-primary/40 hover:bg-primary/5 hover:text-primary transition-smooth"
                 >
                   أدعية {cat.category}
+                </SmartLink>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="font-display text-base font-bold text-foreground mb-3 flex items-center gap-2">
+              <ScrollText className="h-4 w-4 text-primary" />
+              <span>أبواب الأحاديث النبوية الشريفة</span>
+            </h3>
+            <div className="flex flex-wrap gap-2.5">
+              {Object.values(HADITH_CATEGORY_SLUGS).map((cat) => (
+                <SmartLink
+                  key={cat.slug}
+                  to={`/hadith/${cat.slug}`}
+                  title={cat.title}
+                  className="rounded-xl border border-border bg-background/70 px-4 py-2 text-xs sm:text-sm font-medium hover:border-primary/40 hover:bg-primary/5 hover:text-primary transition-smooth"
+                >
+                  {cat.category}
                 </SmartLink>
               ))}
             </div>

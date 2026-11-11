@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 
+export type FavoriteItemType = "azkar" | "dua" | "hadith";
+
 export interface FavoriteItem {
   id: string;
   sourceId: string;
-  type: "azkar" | "dua";
+  type: FavoriteItemType;
   title?: string;
   text: string;
   category: string;
@@ -16,7 +18,7 @@ export interface FavoriteItem {
 const STORAGE_KEY = "al_noor_favorites_v1";
 const SYNC_EVENT = "al-noor-favorites-change";
 
-export function makeFavoriteId(type: "azkar" | "dua", sourceId: string): string {
+export function makeFavoriteId(type: FavoriteItemType, sourceId: string): string {
   return `${type}:${sourceId}`;
 }
 
@@ -33,7 +35,7 @@ function loadFavorites(): FavoriteItem[] {
         typeof item === "object" &&
         typeof item.id === "string" &&
         typeof item.sourceId === "string" &&
-        (item.type === "azkar" || item.type === "dua") &&
+        (item.type === "azkar" || item.type === "dua" || item.type === "hadith") &&
         typeof item.text === "string"
     );
   } catch {
@@ -67,7 +69,7 @@ export function useFavorites() {
   }, []);
 
   const isFavorite = useCallback(
-    (type: "azkar" | "dua", sourceId: string): boolean => {
+    (type: FavoriteItemType, sourceId: string): boolean => {
       const id = makeFavoriteId(type, sourceId);
       return favorites.some((item) => item.id === id);
     },

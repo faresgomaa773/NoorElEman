@@ -25,7 +25,7 @@ import { ReadingModeToolbar } from "@/components/ReadingModeToolbar";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
-type FilterType = "all" | "azkar" | "dua";
+type FilterType = "all" | "azkar" | "dua" | "hadith";
 
 const Favorites = () => {
   const { favorites, removeFavorite, clearFavorites } = useFavorites();
@@ -55,6 +55,7 @@ const Favorites = () => {
 
   const azkarCount = favorites.filter((f) => f.type === "azkar").length;
   const duaCount = favorites.filter((f) => f.type === "dua").length;
+  const hadithCount = favorites.filter((f) => f.type === "hadith").length;
 
   const increment = (id: string, max: number) => {
     setCounts((prev) => {
@@ -96,9 +97,9 @@ const Favorites = () => {
   return (
     <Layout>
       <SEO
-        title="مفضلتك | الأذكار والأدعية المحفوظة | نور الإيمان"
-        description="تصفّح الأذكار والأدعية التي حفظتها في مفضلتك لقراءتها والمداومة عليها يومياً."
-        keywords="مفضلتك, المفضلة, أذكار محفوظة, أدعية محفوظة, نور الإيمان"
+        title="مفضلتك | الأذكار والأدعية والأحاديث المحفوظة | نور الإيمان"
+        description="تصفّح الأذكار والأدعية والأحاديث النبوية التي حفظتها في مفضلتك لقراءتها والمداومة عليها يومياً."
+        keywords="مفضلتك, المفضلة, أذكار محفوظة, أدعية محفوظة, أحاديث محفوظة, نور الإيمان"
       />
 
       <section className="relative overflow-hidden bg-gradient-to-br from-emerald-800 via-teal-700 to-emerald-900 text-primary-foreground py-16">
@@ -107,7 +108,7 @@ const Favorites = () => {
           <Heart className="h-12 w-12 mx-auto mb-4 text-accent fill-accent/20" />
           <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">مفضلتك</h1>
           <p className="text-primary-foreground/85 max-w-xl mx-auto">
-            الأذكار والأدعية التي اخترتها لتكون قريبة منك في كل وقت
+            الأذكار والأدعية والأحاديث التي اخترتها لتكون قريبة منك في كل وقت
           </p>
         </div>
       </section>
@@ -138,7 +139,7 @@ const Favorites = () => {
             <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
               <div
                 className={cn(
-                  "inline-flex items-center gap-1 p-1 rounded-xl border",
+                  "inline-flex flex-wrap items-center gap-1 p-1 rounded-xl border",
                   nightMode
                     ? "bg-[#101815] border-[#283932]"
                     : "bg-muted/50 border-border"
@@ -148,6 +149,7 @@ const Favorites = () => {
                   { id: "all" as FilterType, label: `الكل (${favorites.length})` },
                   { id: "azkar" as FilterType, label: `الأذكار (${azkarCount})` },
                   { id: "dua" as FilterType, label: `الأدعية (${duaCount})` },
+                  { id: "hadith" as FilterType, label: `الأحاديث (${hadithCount})` },
                 ].map((tab) => {
                   const active = filter === tab.id;
                   return (
@@ -229,6 +231,11 @@ const Favorites = () => {
                   <Link to="/duas">
                     <BookMarked className="h-4 w-4" />
                     <span>الأدعية المأثورة</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link to="/hadith">
+                    <span>الأحاديث النبوية</span>
                     <ArrowLeft className="h-4 w-4" />
                   </Link>
                 </Button>
@@ -302,7 +309,7 @@ const Favorites = () => {
                           {item.title || categoryLabel}
                         </span>
                         <span aria-hidden="true">·</span>
-                        <span>{isZikr ? "ذكر" : "دعاء"}</span>
+                        <span>{isZikr ? "ذكر" : item.type === "hadith" ? "حديث شريف" : "دعاء"}</span>
                         {item.title && item.title !== categoryLabel && (
                           <>
                             <span aria-hidden="true">·</span>

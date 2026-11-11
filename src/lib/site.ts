@@ -1,6 +1,6 @@
 export const SITE_URL = "https://al-noor-quest.lovable.app";
 
-export const PUBLIC_PATHS = ["/", "/morning", "/evening", "/duas", "/quran", "/tasbih", "/quiz"];
+export const PUBLIC_PATHS = ["/", "/morning", "/evening", "/duas", "/hadith", "/quran", "/tasbih", "/quiz"];
 
 /**
  * Descriptive URL aliases that map human-readable SEO slugs to canonical public routes.
@@ -11,10 +11,149 @@ export const DESCRIPTIVE_ROUTE_ALIASES: Record<string, string> = {
   "/azkar-al-masaa": "/evening",
   "/evening-azkar": "/evening",
   "/islamic-duas": "/duas",
+  "/prophetic-hadiths": "/hadith",
+  "/ahadith-nabawiya": "/hadith",
   "/holy-quran": "/quran",
   "/electronic-tasbih": "/tasbih",
   "/islamic-quiz": "/quiz",
 };
+
+/**
+ * Descriptive URL slugs for Hadith books & collections (/hadith/:categorySlug)
+ */
+export const HADITH_CATEGORY_SLUGS: Record<
+  string,
+  { slug: string; category: string; aliases: string[]; title: string; description: string }
+> = {
+  "sahih-al-bukhari": {
+    slug: "sahih-al-bukhari",
+    category: "صحيح البخاري",
+    aliases: ["البخاري", "صحيح البخاري", "bukhari", "ara-bukhari"],
+    title: "صحيح البخاري كاملاً جميع الأبواب والأحاديث بالتشكيل | نور الإيمان",
+    description:
+      "تصفّح كتاب الجامع المسند الصحيح المختصر (صحيح البخاري) للإمام محمد بن إسماعيل البخاري كاملاً بجميع كتبه الـ 97 وأحاديثه الـ 7563 مضبوطة بالتشكيل.",
+  },
+  "sahih-muslim": {
+    slug: "sahih-muslim",
+    category: "صحيح مسلم",
+    aliases: ["مسلم", "صحيح مسلم", "muslim", "ara-muslim"],
+    title: "صحيح مسلم كاملاً جميع الكتب والأحاديث بالتشكيل | نور الإيمان",
+    description:
+      "اقرأ كتاب المسند الصحيح المختصر (صحيح مسلم) للإمام مسلم بن الحجاج النيسابوري كاملاً بجميع كتبه الـ 56 وأحاديثه الصحيحة مضبوطة بالتشكيل.",
+  },
+  "sunan-abi-dawud": {
+    slug: "sunan-abi-dawud",
+    category: "سنن أبي داود",
+    aliases: ["أبو داود", "سنن أبي داود", "abudawud", "ara-abudawud"],
+    title: "سنن أبي داود كاملاً جميع الأبواب والأحاديث مع درجة الصحة | نور الإيمان",
+    description:
+      "تصفّح كتاب سنن أبي داود للإمام سليمان بن الأشعث السجستاني كاملاً بجميع أبوابه الفقهية وأحاديثه الـ 5274 مع بيان حكم الحديث.",
+  },
+  "jami-at-tirmidhi": {
+    slug: "jami-at-tirmidhi",
+    category: "جامع الترمذي",
+    aliases: ["الترمذي", "جامع الترمذي", "سنن الترمذي", "tirmidhi", "ara-tirmidhi"],
+    title: "جامع الترمذي (سنن الترمذي) كاملاً جميع الأبواب والأحاديث | نور الإيمان",
+    description:
+      "تصفّح كتاب الجامع الكبير (سنن الترمذي) للإمام أبي عيسى محمد بن عيسى الترمذي كاملاً بجميع أبوابه الـ 49 وأحاديثه مع درجة الصحة.",
+  },
+  "sunan-an-nasai": {
+    slug: "sunan-an-nasai",
+    category: "سنن النسائي",
+    aliases: ["النسائي", "سنن النسائي", "المجتبى", "nasai", "ara-nasai"],
+    title: "سنن النسائي (المجتبى) كاملاً جميع الكتب والأحاديث | نور الإيمان",
+    description:
+      "اقرأ كتاب المجتبى من السنن الكبرى (سنن النسائي) للإمام أحمد بن شعيب النسائي كاملاً بجميع كتبه الـ 51 وأحاديثه الـ 5765 بالتشكيل.",
+  },
+  "sunan-ibn-majah": {
+    slug: "sunan-ibn-majah",
+    category: "سنن ابن ماجه",
+    aliases: ["ابن ماجه", "سنن ابن ماجه", "ibnmajah", "ara-ibnmajah"],
+    title: "سنن ابن ماجه كاملاً جميع الأبواب والأحاديث مع التخريج | نور الإيمان",
+    description:
+      "تصفّح كتاب سنن ابن ماجه للإمام محمد بن يزيد القزويني كاملاً بجميع أبوابه الـ 37 وأحاديثه الـ 4343 مضبوطة بالتشكيل.",
+  },
+  "muwatta-malik": {
+    slug: "muwatta-malik",
+    category: "موطأ الإمام مالك",
+    aliases: ["موطأ مالك", "الموطأ", "موطأ الإمام مالك", "malik", "ara-malik"],
+    title: "موطأ الإمام مالك كاملاً جميع الكتب والأحاديث | نور الإيمان",
+    description:
+      "اقرأ كتاب الموطأ لإمام دار الهجرة مالك بن أنس كاملاً بجميع أبوابه الـ 61 وأحاديثه وآثاره الفقهية مضبوطة بالتشكيل.",
+  },
+  "al-arbaun-an-nawawiyyah": {
+    slug: "al-arbaun-an-nawawiyyah",
+    category: "الأربعون النووية",
+    aliases: ["الأربعون النووية", "جوامع الكلم والأربعون النووية", "nawawi", "ara-nawawi"],
+    title: "متن الأربعين النووية كاملاً (42 حديثاً) مع الشرح والفوائد | نور الإيمان",
+    description:
+      "اقرأ متن الأربعين النووية للإمام يحيى بن شرف النووي كاملاً (42 حديثاً من جوامع كلم النبي ﷺ) بالتشكيل مع الشرح والفوائد.",
+  },
+  "al-ahadith-al-qudsiyyah": {
+    slug: "al-ahadith-al-qudsiyyah",
+    category: "الأحاديث القدسية",
+    aliases: ["الأحاديث القدسية", "الأربعون القدسية", "qudsi", "ara-qudsi"],
+    title: "الأحاديث القدسية الأربعون كاملة بالتشكيل | نور الإيمان",
+    description:
+      "تصفّح مجموعة الأحاديث القدسية الصحيحة التي يرويها النبي ﷺ عن ربه عز وجل كاملة بالتشكيل.",
+  },
+  "jawami-wahadith-nawawi": {
+    slug: "jawami-wahadith-nawawi",
+    category: "جوامع الكلم والأربعون النووية",
+    aliases: ["جوامع الكلم"],
+    title: "أحاديث الأربعين النووية وجوامع الكلم مكتوبة مع الشرح | نور الإيمان",
+    description:
+      "أحاديث الأربعين النووية وجوامع كلم النبي ﷺ مكتوبة بالتشكيل الكامل مع بيان الراوي والمصدر وشرح الفوائد المستفادة.",
+  },
+  "aqidah-and-iman": {
+    slug: "aqidah-and-iman",
+    category: "العقيدة والإيمان",
+    aliases: ["العقيدة والإيمان", "الإيمان", "التوحيد"],
+    title: "أحاديث العقيدة والإيمان والتوحيد الصحيحة | نور الإيمان",
+    description:
+      "أحاديث نبوية صحيحة في أصول العقيدة وأركان الإيمان والتوكل على الله وحسن الظن به من الصحيحين وكتب السنة.",
+  },
+  "akhlaq-and-adab": {
+    slug: "akhlaq-and-adab",
+    category: "الأخلاق والآداب الإسلامية",
+    aliases: ["الأخلاق والآداب الإسلامية", "الأخلاق", "الآداب"],
+    title: "أحاديث الأخلاق والآداب الإسلامية وحسن الخلق | نور الإيمان",
+    description:
+      "أحاديث نبوية شريفة في فضل حسن الخلق والصدق والرفق والحلم والكلمة الطيبة وآداب المسلم اليومية.",
+  },
+  "ibadat-and-virtues": {
+    slug: "ibadat-and-virtues",
+    category: "العبادات وفضائل الأعمال",
+    aliases: ["العبادات وفضائل الأعمال", "فضائل الأعمال", "العبادات"],
+    title: "أحاديث العبادات وفضائل الأعمال والذكر والقرآن | نور الإيمان",
+    description:
+      "أحاديث صحيحة في فضائل الصلاة والقرآن والذكر والتسبيح والصدقة وأحب الأعمال إلى الله تعالى.",
+  },
+  "raqaiq-and-zuhd": {
+    slug: "raqaiq-and-zuhd",
+    category: "الرقائق والزهد والورع",
+    aliases: ["الرقائق والزهد والورع", "الزهد", "الرقائق"],
+    title: "أحاديث الرقائق والزهد والورع وتزكية القلوب | نور الإيمان",
+    description:
+      "أحاديث نبوية مؤثرة في تزكية النفس وإصلاح القلب والورع والزهد في الدنيا والاستعداد للآخرة.",
+  },
+  "family-and-muamalat": {
+    slug: "family-and-muamalat",
+    category: "الأسرة والمعاملات والتكافل",
+    aliases: ["الأسرة والمعاملات والتكافل", "الأسرة", "المعاملات"],
+    title: "أحاديث الأسرة وبر الوالدين والتراحم والتكافل | نور الإيمان",
+    description:
+      "أحاديث نبوية صحيحة في بر الوالدين وصلة الرحم وحسن الجوار وقضاء الحوائج والتراحم بين المسلمين.",
+  },
+};
+
+export function getHadithCategorySlug(categoryName: string): string | undefined {
+  const normalized = categoryName.trim();
+  const entry = Object.values(HADITH_CATEGORY_SLUGS).find(
+    (item) => item.category === normalized || item.aliases.includes(normalized)
+  );
+  return entry?.slug;
+}
 
 /**
  * Descriptive URL slugs for Dua categories (/duas/:categorySlug)
@@ -254,6 +393,29 @@ export const ROUTE_SEO_META: Record<string, RouteSeoMeta> = {
       },
     ],
   },
+  "/hadith": {
+    path: "/hadith",
+    descriptiveSlug: "/prophetic-hadiths",
+    title: "الأحاديث النبوية الشريفة الصحيحة مع الشرح | نور الإيمان",
+    description:
+      "تصفّح الأحاديث النبوية الشريفة الصحيحة من الأربعين النووية والصحيحين (البخاري ومسلم) مكتوبة بالتشكيل مع بيان الراوي والمصدر وشرح الفوائد المستفادة.",
+    keywords:
+      "الأحاديث النبوية, أحاديث صحيحة, الأربعون النووية, أحاديث البخاري ومسلم, جوامع الكلم, حديث شريف مع الشرح, السنة النبوية, نور الإيمان",
+    heading: "الأحاديث النبوية الشريفة",
+    ctaLabel: "تصفّح الأحاديث النبوية الشريفة",
+    faqs: [
+      {
+        question: "ما هي مصادر الأحاديث النبوية المعروضة في منصة نور الإيمان؟",
+        answer:
+          "جميع الأحاديث المعروضة مأخوذة من أصح كتب السنة النبوية المعتمدة مثل صحيح البخاري وصحيح مسلم ومتن الأربعين النووية للإمام النووي، مع ذكر الصحابي الراوي ودرجة الحديث وشرح موجز لفوائده.",
+      },
+      {
+        question: "هل يمكنني البحث في الأحاديث أو تصفيتها حسب الموضوع؟",
+        answer:
+          "نعم، يمكنك البحث الفوري بالكلمات أو اسم الصحابي الراوي أو المصدر، كما يمكنك التصفية حسب الأبواب الموضوعية مثل جوامع الكلم، العقيدة والإيمان، الأخلاق والآداب، والعبادات وفضائل الأعمال.",
+      },
+    ],
+  },
   "/quran": {
     path: "/quran",
     descriptiveSlug: "/holy-quran",
@@ -342,6 +504,12 @@ export function isIndexablePath(path: string): boolean {
   if (normalized.startsWith("/duas/")) {
     const slug = normalized.slice("/duas/".length);
     return Boolean(DUA_CATEGORY_SLUGS[slug]);
+  }
+
+  // Descriptive Hadith Category URLs: /hadith/jawami-wahadith-nawawi, etc.
+  if (normalized.startsWith("/hadith/")) {
+    const slug = normalized.slice("/hadith/".length);
+    return Boolean(HADITH_CATEGORY_SLUGS[slug]);
   }
 
   return false;

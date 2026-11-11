@@ -1437,3 +1437,6 @@ export const DEFAULT_QUESTIONS: QuestionRow[] = [
   },
 ];
 
+export { DEFAULT_HADITHS, type HadithItem } from "./hadithData";
+
+

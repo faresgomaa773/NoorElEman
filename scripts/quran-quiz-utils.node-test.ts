@@ -5,8 +5,10 @@ import {
   deduplicateQuestions,
   filterAzkar,
   filterDuas,
+  filterHadiths,
   filterSurahs,
   getAyahAudioCandidates,
+  getDailyHadith,
   getNextContinuousPlaybackTarget,
   getNextSurahNumber,
   getPrevSurahNumber,
@@ -22,7 +24,13 @@ import {
   stripLeadingBasmalah,
   toArabicNumerals,
 } from "../src/lib/quranAndQuizUtils.ts";
-import { DEFAULT_AZKAR, DEFAULT_DUAS, DEFAULT_QUESTIONS } from "../src/data/islamicData.ts";
+import { DEFAULT_AZKAR, DEFAULT_DUAS, DEFAULT_HADITHS, DEFAULT_QUESTIONS } from "../src/data/islamicData.ts";
+import {
+  HADITH_BOOKS,
+  getHadithBookBySlugOrCategory,
+  translateHadithGrade,
+  translateHadithSectionTitle,
+} from "../src/data/hadithData.ts";
 
 function createMemoryStorage() {
   const map = new Map<string, string>();
@@ -211,7 +219,7 @@ describe("Quran & Quiz Pure Logic (node:test)", () => {
     assert.equal(filterSurahs(sampleSurahs, "١٨", "all")[0]?.number, 18);
   });
 
-  it("provides 44 authentic Azkar (22 morning + 22 evening) and 36 Duas across 8 categories with deduplicated merge and search", () => {
+  it("provides 44 authentic Azkar (22 morning + 22 evening), 36 Duas across 8 categories, and 9 Complete Hadith Books", () => {
     const morning = DEFAULT_AZKAR.filter((z) => z.category === "morning");
     const evening = DEFAULT_AZKAR.filter((z) => z.category === "evening");
     assert.equal(morning.length, 22);
@@ -240,8 +248,27 @@ describe("Quran & Quiz Pure Logic (node:test)", () => {
     assert.ok(filterDuas(DEFAULT_DUAS, "all", "الاستخارة").length >= 1);
     assert.equal(filterDuas(DEFAULT_DUAS, "الوالدين والأهل", "").length, 3);
     assert.equal(filterDuas(DEFAULT_DUAS, "أدعية اليوم والعبادات", "").length, 3);
+
+    // Hadiths & 9 Complete Hadith Books verification
+    assert.equal(HADITH_BOOKS.length, 9);
+    assert.equal(getHadithBookBySlugOrCategory("sahih-al-bukhari")?.title, "صحيح البخاري");
+    assert.equal(getHadithBookBySlugOrCategory("صحيح مسلم")?.edition, "ara-muslim");
+    assert.equal(translateHadithSectionTitle("Revelation", 1), "كتاب بدء الوحي");
+    assert.equal(translateHadithSectionTitle("Belief", 2), "كتاب الإيمان");
+    assert.equal(translateHadithGrade("Sahih"), "صحيح");
+    assert.equal(translateHadithGrade("Hasan Sahih"), "حسن صحيح");
+
+    assert.equal(DEFAULT_HADITHS.length, 36);
+    const hadithCategories = new Set(DEFAULT_HADITHS.map((h) => h.category));
+    assert.equal(hadithCategories.size, 6);
+    assert.equal(filterHadiths(DEFAULT_HADITHS, "جوامع الكلم والأربعون النووية", "").length, 6);
+    assert.ok(filterHadiths(DEFAULT_HADITHS, "all", "الأعمال بالنيات").length >= 1);
+    assert.ok(filterHadiths(DEFAULT_HADITHS, "all", "عمر بن الخطاب").length >= 1);
+    assert.ok(getDailyHadith(DEFAULT_HADITHS) !== null);
   });
 });
+
+
 
 
 

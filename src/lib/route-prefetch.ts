@@ -9,6 +9,7 @@ const loaders: Record<string, Loader> = {
   "/morning": () => import("@/pages/Morning.tsx"),
   "/evening": () => import("@/pages/Evening.tsx"),
   "/duas": () => import("@/pages/Duas.tsx"),
+  "/hadith": () => import("@/pages/Hadith.tsx"),
   "/favorites": () => import("@/pages/Favorites.tsx"),
   "/tasbih": () => import("@/pages/Tasbih.tsx"),
   "/quran": () => import("@/pages/Quran.tsx"),
@@ -23,6 +24,7 @@ function resolveLoaderKey(path: string): string {
   const normalized = normalizePath(path);
   if (normalized.startsWith("/quran/")) return "/quran";
   if (normalized.startsWith("/duas/")) return "/duas";
+  if (normalized.startsWith("/hadith/")) return "/hadith";
   return normalized;
 }
 

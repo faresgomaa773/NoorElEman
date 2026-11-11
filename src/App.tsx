@@ -12,6 +12,7 @@ import Index from "./pages/Index.tsx";
 const Morning = lazy(() => import("./pages/Morning.tsx"));
 const Evening = lazy(() => import("./pages/Evening.tsx"));
 const Duas = lazy(() => import("./pages/Duas.tsx"));
+const Hadith = lazy(() => import("./pages/Hadith.tsx"));
 const Favorites = lazy(() => import("./pages/Favorites.tsx"));
 const Tasbih = lazy(() => import("./pages/Tasbih.tsx"));
 const Quran = lazy(() => import("./pages/Quran.tsx"));
@@ -31,7 +32,7 @@ const PageLoader = () => (
 
 const App = () => {
   useEffect(() => {
-    return prefetchPriorityRoutes(["/morning", "/evening", "/duas", "/favorites", "/quran", "/tasbih"]);
+    return prefetchPriorityRoutes(["/morning", "/evening", "/duas", "/hadith", "/favorites", "/quran", "/tasbih"]);
   }, []);
 
   return (
@@ -58,6 +59,12 @@ const App = () => {
                 <Route path="/duas" element={<Duas />} />
                 <Route path="/duas/:categorySlug" element={<Duas />} />
                 <Route path="/islamic-duas" element={<Duas />} />
+
+                {/* Prophetic Hadiths, category slugs & descriptive aliases */}
+                <Route path="/hadith" element={<Hadith />} />
+                <Route path="/hadith/:categorySlug" element={<Hadith />} />
+                <Route path="/prophetic-hadiths" element={<Hadith />} />
+                <Route path="/ahadith-nabawiya" element={<Hadith />} />
 
                 {/* Favorites */}
                 <Route path="/favorites" element={<Favorites />} />

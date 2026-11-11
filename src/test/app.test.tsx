@@ -1,3 +1,4 @@
+import { Routes, Route } from "react-router-dom";
 import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
@@ -8,6 +9,7 @@ import Index from "@/pages/Index";
 import Morning from "@/pages/Morning";
 import Evening from "@/pages/Evening";
 import Duas from "@/pages/Duas";
+import Hadith from "@/pages/Hadith";
 import Tasbih from "@/pages/Tasbih";
 import Quiz from "@/pages/Quiz";
 import Quran from "@/pages/Quran";
@@ -352,7 +354,64 @@ describe("Application Pages & Core Functionality", () => {
     fireEvent.change(duaSearch, { target: { value: "الاستخارة" } });
     expect(screen.getByText("دعاء الاستخارة")).toBeInTheDocument();
   });
+
+  it(
+    "renders Prophetic Hadiths library (/hadith) with 9 complete books, opens Sahih al-Bukhari complete book reader, and saves to favorites",
+    async () => {
+      const { unmount } = renderWithProviders(
+        <Routes>
+          <Route path="/hadith" element={<Hadith />} />
+          <Route path="/hadith/:categorySlug" element={<Hadith />} />
+        </Routes>,
+        "/hadith"
+      );
+
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+        "موسوعة مجموعات كتب الحديث الشريف الكاملة"
+      );
+      expect(screen.getByTestId("daily-hadith-card")).toBeInTheDocument();
+      expect(screen.getByTestId("hadith-books-grid")).toBeInTheDocument();
+
+      // Verify all 9 major Hadith books are displayed
+      expect(screen.getByLabelText("تصفّح صحيح البخاري كاملاً")).toBeInTheDocument();
+      expect(screen.getByLabelText("تصفّح صحيح مسلم كاملاً")).toBeInTheDocument();
+      expect(screen.getByLabelText("تصفّح سنن أبي داود كاملاً")).toBeInTheDocument();
+      expect(screen.getByLabelText("تصفّح جامع الترمذي كاملاً")).toBeInTheDocument();
+      expect(screen.getByLabelText("تصفّح سنن النسائي كاملاً")).toBeInTheDocument();
+      expect(screen.getByLabelText("تصفّح سنن ابن ماجه كاملاً")).toBeInTheDocument();
+      expect(screen.getByLabelText("تصفّح موطأ الإمام مالك كاملاً")).toBeInTheDocument();
+      expect(screen.getByLabelText("تصفّح الأربعون النووية كاملاً")).toBeInTheDocument();
+      expect(screen.getByLabelText("تصفّح الأحاديث القدسية كاملاً")).toBeInTheDocument();
+
+      // Search in Jawami' al-Kalim and save to Favorites
+      const searchInput = screen.getByLabelText("ابحث في الأحاديث");
+      fireEvent.change(searchInput, { target: { value: "بني الإسلام على خمس" } });
+      expect(screen.getByText("بني الإسلام على خمس")).toBeInTheDocument();
+
+      const favBtns = screen.getAllByLabelText("إضافة إلى المفضلة");
+      fireEvent.click(favBtns[0]);
+      expect(screen.getByLabelText("إزالة من المفضلة")).toBeInTheDocument();
+
+      // Open Sahih al-Bukhari complete book reader
+      fireEvent.click(screen.getByLabelText("تصفّح صحيح البخاري كاملاً"));
+      await waitFor(() => {
+        expect(screen.getByTestId("hadith-book-reader")).toBeInTheDocument();
+      });
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("صحيح البخاري كاملاً");
+      expect(screen.getByTestId("book-sections-index")).toBeInTheDocument();
+      expect(screen.getAllByText(/كتاب بدء الوحي/).length).toBeGreaterThan(0);
+
+      unmount();
+
+      // Verify saved Hadith appears in Favorites page
+      renderWithProviders(<Favorites />, "/favorites");
+      expect(screen.getByText(/الأحاديث \(1\)/)).toBeInTheDocument();
+      expect(screen.getByText(/بني الإسلام على خمس/)).toBeInTheDocument();
+    },
+    15000
+  );
 });
+
 
 
 

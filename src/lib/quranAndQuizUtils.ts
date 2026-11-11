@@ -548,4 +548,50 @@ export function filterDuas<
   });
 }
 
+export function filterHadiths<
+  T extends {
+    number?: number;
+    title: string;
+    narrator: string;
+    text: string;
+    explanation?: string;
+    category: string;
+    source?: string | null;
+  }
+>(items: readonly T[], categoryFilter: string = "all", searchQuery: string = ""): T[] {
+  const normQuery = normalizeQuestionText(searchQuery);
+  return items.filter((item) => {
+    if (categoryFilter !== "all" && item.category !== categoryFilter) {
+      return false;
+    }
+    if (!normQuery) return true;
+    const normTitle = normalizeQuestionText(item.title);
+    const normNarrator = normalizeQuestionText(item.narrator);
+    const normText = normalizeQuestionText(item.text);
+    const normExp = item.explanation ? normalizeQuestionText(item.explanation) : "";
+    const normCat = normalizeQuestionText(item.category);
+    const normSource = item.source ? normalizeQuestionText(item.source) : "";
+    const numStr = item.number ? String(item.number) : "";
+    const arabicNumStr = item.number ? toArabicNumerals(item.number) : "";
+
+    return (
+      normTitle.includes(normQuery) ||
+      normNarrator.includes(normQuery) ||
+      normText.includes(normQuery) ||
+      normExp.includes(normQuery) ||
+      normCat.includes(normQuery) ||
+      normSource.includes(normQuery) ||
+      numStr === normQuery ||
+      arabicNumStr === searchQuery.trim()
+    );
+  });
+}
+
+export function getDailyHadith<T>(items: readonly T[], date: Date = new Date()): T | null {
+  if (!items.length) return null;
+  const seed = date.getFullYear() * 372 + (date.getMonth() + 1) * 31 + date.getDate();
+  return items[seed % items.length] ?? items[0] ?? null;
+}
+
+
 
