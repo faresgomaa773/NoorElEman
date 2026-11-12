@@ -23,7 +23,9 @@ export function MiniPlayer() {
             <div className="flex-1 min-w-0">
               <p className="font-display font-bold text-sm text-foreground truncate">سورة {current.surahName}</p>
               <p className="text-xs text-muted-foreground truncate">
-                {current.reciterName} • آية {current.ayahIndex + 1}/{current.totalAyahs}
+                {current.playlist.length > 1
+                  ? `${current.reciterName} • آية ${current.ayahIndex + 1}/${current.totalAyahs}`
+                  : `${current.reciterName} • تلاوة السورة كاملة`}
               </p>
             </div>
             <div className="flex items-center gap-1 shrink-0">

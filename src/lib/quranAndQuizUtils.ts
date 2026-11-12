@@ -101,6 +101,72 @@ export function getAyahAudioCandidates(params: {
   return candidates;
 }
 
+const FULL_SURAH_RECITER_SOURCES: Record<string, readonly string[]> = {
+  "ar.husary": [
+    "https://cdn.mp3quran.net/audio/mahmoud-husary/r1",
+    "https://download.quranicaudio.com/quran/mahmood_khaleel_al-husaree",
+    "https://server13.mp3quran.net/husr",
+  ],
+  "ar.husarymujawwad": [
+    "https://cdn.mp3quran.net/audio/mahmoud-husary/r2",
+    "https://server13.mp3quran.net/husr/Almusshaf-Al-Mojawwad",
+    "https://cdn.mp3quran.net/audio/mahmoud-husary/r1",
+  ],
+  "ar.minshawi": [
+    "https://cdn.mp3quran.net/audio/muhammad-minshawi/r1",
+    "https://download.quranicaudio.com/quran/muhammad_siddeeq_al-minshaawee",
+    "https://server10.mp3quran.net/minsh",
+  ],
+  "ar.minshawimujawwad": [
+    "https://cdn.mp3quran.net/audio/muhammad-minshawi/r2",
+    "https://server10.mp3quran.net/minsh/Almusshaf-Al-Mojawwad",
+    "https://cdn.mp3quran.net/audio/muhammad-minshawi/r1",
+  ],
+  "ar.alafasy": [
+    "https://cdn.mp3quran.net/audio/mishary-alafasy/r1",
+    "https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee",
+    "https://server8.mp3quran.net/afs",
+  ],
+  "ar.abdulbasitmurattal": [
+    "https://cdn.mp3quran.net/audio/abdulbasit-abdulsamad/r3",
+    "https://download.quranicaudio.com/quran/abdul_basit_murattal",
+    "https://server7.mp3quran.net/basit",
+  ],
+  "ar.abdurrahmaansudais": [
+    "https://cdn.mp3quran.net/audio/abdulrahman-sudais/r1",
+    "https://download.quranicaudio.com/quran/abdurrahmaan_as-sudays",
+    "https://server11.mp3quran.net/sds",
+  ],
+  "ar.mahermuaiqly": [
+    "https://cdn.mp3quran.net/audio/maher-muaiqly/r1",
+    "https://download.quranicaudio.com/quran/maher_256",
+    "https://server12.mp3quran.net/maher",
+  ],
+  "ar.muhammadayyoub": [
+    "https://cdn.mp3quran.net/audio/muhammad-ayyub/r1",
+    "https://download.quranicaudio.com/quran/muhammad_ayyoob",
+    "https://server8.mp3quran.net/ayyub",
+  ],
+  "ar.hanirifai": [
+    "https://cdn.mp3quran.net/audio/hani-rifai/r1",
+    "https://download.quranicaudio.com/quran/rifai",
+    "https://server8.mp3quran.net/hani",
+  ],
+};
+
+export function getFullSurahAudioUrls(surahNumber: number, reciterId: string): string[] {
+  const safeSurah = Math.max(1, Math.min(114, Math.floor(Number(surahNumber) || 1)));
+  const padded = String(safeSurah).padStart(3, "0");
+  const bases = FULL_SURAH_RECITER_SOURCES[reciterId] ?? FULL_SURAH_RECITER_SOURCES["ar.husary"];
+  const urls = bases.map((base) => `${base}/${padded}.mp3`);
+  // Always include Husary & Alafasy full-surah mirrors as final fallbacks
+  const fallbackUrl = `https://cdn.mp3quran.net/audio/mahmoud-husary/r1/${padded}.mp3`;
+  if (!urls.includes(fallbackUrl)) {
+    urls.push(fallbackUrl);
+  }
+  return urls;
+}
+
 export function shouldAdvanceAyahEarly(
   currentTime: number,
   duration: number,

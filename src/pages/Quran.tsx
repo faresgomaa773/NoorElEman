@@ -8,13 +8,13 @@ import {
 import {
   filterSurahs,
   formatSurahUiName,
-  getAyahAudioCandidates,
+  getFullSurahAudioUrls,
   getNextSurahNumber,
   getPrevSurahNumber,
   stripLeadingBasmalah,
   toArabicNumerals,
 } from "@/lib/quranAndQuizUtils";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -55,9 +55,6 @@ interface Ayah {
   numberInSurah: number;
   number: number;
   text: string;
-  audio?: string;
-  audioSecondary?: string[];
-  audioUrls?: string[];
 }
 
 const RECITERS = [
@@ -109,20 +106,15 @@ function MushafCornerOrnament({ className }: { className?: string }) {
 
 function MushafAyahMedallion({
   number,
-  active,
   nightMode,
 }: {
   number: number;
-  active: boolean;
   nightMode: boolean;
 }) {
   return (
     <span
       data-testid={`ayah-marker-${number}`}
-      className={cn(
-        "relative inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 mx-1.5 align-middle select-none transition-transform duration-200",
-        active && "scale-110"
-      )}
+      className="relative inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 mx-1.5 align-middle select-none"
     >
       <svg
         viewBox="0 0 44 44"
@@ -130,11 +122,7 @@ function MushafAyahMedallion({
         aria-hidden="true"
         className={cn(
           "absolute inset-0 w-full h-full",
-          active
-            ? "text-[#B8860B] dark:text-[#E5C158]"
-            : nightMode
-              ? "text-[#C8A24A]"
-              : "text-[#B68A2E]"
+          nightMode ? "text-[#C8A24A]" : "text-[#B68A2E]"
         )}
       >
         {/* Outer 8-pointed Rub el Hizb star */}
@@ -145,7 +133,7 @@ function MushafAyahMedallion({
           height="28"
           rx="2"
           fill="currentColor"
-          fillOpacity={active ? "0.28" : "0.12"}
+          fillOpacity="0.12"
           stroke="currentColor"
           strokeWidth="1.5"
         />
@@ -157,7 +145,7 @@ function MushafAyahMedallion({
           rx="2"
           transform="rotate(45 22 22)"
           fill="currentColor"
-          fillOpacity={active ? "0.28" : "0.12"}
+          fillOpacity="0.12"
           stroke="currentColor"
           strokeWidth="1.5"
         />
@@ -166,7 +154,7 @@ function MushafAyahMedallion({
           cx="22"
           cy="22"
           r="11.5"
-          fill={active ? (nightMode ? "#283932" : "#FDF3C7") : nightMode ? "#15201C" : "#FFFDF7"}
+          fill={nightMode ? "#15201C" : "#FFFDF7"}
           stroke="currentColor"
           strokeWidth="1.4"
         />
@@ -174,13 +162,7 @@ function MushafAyahMedallion({
       <span
         className={cn(
           "relative z-10 font-display text-xs sm:text-sm font-bold leading-none pt-0.5",
-          active
-            ? nightMode
-              ? "text-[#F3D478]"
-              : "text-[#7A5200]"
-            : nightMode
-              ? "text-[#E5C158]"
-              : "text-[#6E4B0C]"
+          nightMode ? "text-[#E5C158]" : "text-[#6E4B0C]"
         )}
       >
         {toArabicNumerals(number)}
@@ -201,7 +183,6 @@ const Quran = () => {
   const [reciter, setReciter] = useState<string>("ar.husary");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [revelationFilter, setRevelationFilter] = useState<"all" | "Meccan" | "Medinan">("all");
-  const pendingReciterResumeIdxRef = useRef<number | null>(null);
 
   const audio = useQuranAudio();
   const {
@@ -265,94 +246,57 @@ const Quran = () => {
   }, [currentAudioSurahNumber, isAudioPlaying, navigate, selected, surahs]);
 
   const { data: ayahs = [], isFetching: loadingAyahs, isError: ayahsError, refetch: retryAyahs } = useQuery<Ayah[]>({
-    queryKey: ["quran", "ayahs", selected?.number, reciter],
+    queryKey: ["quran", "ayahs-text", selected?.number],
     enabled: selected !== null,
     staleTime: 24 * 60 * 60 * 1000,
     queryFn: async ({ signal }) => {
       if (!selected) return [];
       const res = await fetch(
-        `https://api.alquran.cloud/v1/surah/${selected.number}/editions/quran-uthmani-quran-academy,${reciter}`,
+        `https://api.alquran.cloud/v1/surah/${selected.number}/quran-uthmani-quran-academy`,
         { signal }
       );
       if (!res.ok) throw new Error("Could not load ayahs");
       const json = await res.json();
-      const text: Ayah[] | undefined = json.data?.[0]?.ayahs;
-      const recordings: Ayah[] | undefined = json.data?.[1]?.ayahs;
-      if (json.code !== 200 || !Array.isArray(text) || !Array.isArray(recordings)) {
+      const text: Ayah[] | undefined = json.data?.ayahs;
+      if (json.code !== 200 || !Array.isArray(text)) {
         throw new Error("Invalid ayah response");
       }
-      return text.map((a, i) => {
-        const rec = recordings[i];
-        const candidates = getAyahAudioCandidates({
-          audio: rec?.audio,
-          audioSecondary: rec?.audioSecondary,
-          ayahGlobalNumber: a.number,
-          reciterId: reciter,
-        });
-        return {
-          numberInSurah: a.numberInSurah,
-          number: a.number,
-          text: a.text,
-          audio: candidates[0] ?? rec?.audio,
-          audioUrls: candidates,
-        };
-      });
+      return text.map((a) => ({
+        numberInSurah: a.numberInSurah,
+        number: a.number,
+        text: a.text,
+      }));
     },
   });
 
-  // Sync currentAyahIdx from global player when same surah is loaded
-  const isCurrent = audio.current && selected && audio.current.surahNumber === selected.number;
-  const currentAyahIdx = isCurrent ? (audio.current?.ayahIndex ?? -1) : -1;
-  const playing = audio.playing && !!isCurrent;
+  const isCurrent = Boolean(audio.current && selected && audio.current.surahNumber === selected.number);
+  const playing = audio.playing && isCurrent;
 
   const reciterName = RECITERS.find((r) => r.id === reciter)?.name || "";
 
-  const playFromIdx = (idx: number) => {
-    if (idx < 0 || idx >= ayahs.length || !selected) return;
-    const targetAyah = ayahs[idx];
-    const url = targetAyah.audioUrls?.[0] ?? targetAyah.audio;
-    if (!url) return;
+  const playFullSurah = (targetSurah: Surah, targetReciterId: string = reciter) => {
+    const targetReciterName = RECITERS.find((r) => r.id === targetReciterId)?.name || reciterName;
+    const candidateUrls = getFullSurahAudioUrls(targetSurah.number, targetReciterId);
+    const primaryUrl = candidateUrls[0];
+    if (!primaryUrl) return;
 
     audio.loadAndPlay({
-      surahName: selected.name.replace(/^سُورَةُ /, ""),
-      surahNumber: selected.number,
-      ayahIndex: idx,
-      totalAyahs: ayahs.length,
-      audioUrl: url,
-      reciterName,
-      reciterId: reciter,
-      playlist: ayahs.map((a) => ({
-        audio: a.audio,
-        audioUrls: a.audioUrls,
-        numberInSurah: a.numberInSurah,
-      })),
+      surahName: formatSurahUiName(targetSurah.name),
+      surahNumber: targetSurah.number,
+      ayahIndex: 0,
+      totalAyahs: 1,
+      audioUrl: primaryUrl,
+      reciterName: targetReciterName,
+      reciterId: targetReciterId,
+      playlist: [
+        {
+          numberInSurah: 1,
+          audio: primaryUrl,
+          audioUrls: candidateUrls,
+        },
+      ],
     });
   };
-
-  // If the user switched reciters while playing, seamlessly continue from the same ayah once loaded
-  useEffect(() => {
-    if (
-      pendingReciterResumeIdxRef.current !== null &&
-      !loadingAyahs &&
-      ayahs.length > 0 &&
-      selected
-    ) {
-      const resumeIdx = Math.min(pendingReciterResumeIdxRef.current, ayahs.length - 1);
-      pendingReciterResumeIdxRef.current = null;
-      playFromIdx(resumeIdx);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ayahs, loadingAyahs, selected]);
-
-  // Smoothly keep the active ayah in view during continuous recitation
-  useEffect(() => {
-    if (!selected || ayahs.length === 0) return;
-    if (currentAyahIdx >= 0 && currentAyahIdx < ayahs.length) {
-      const ayahNum = ayahs[currentAyahIdx].numberInSurah;
-      const el = document.getElementById(`quran-ayah-${ayahNum}`);
-      el?.scrollIntoView?.({ behavior: "smooth", block: "center" });
-    }
-  }, [currentAyahIdx, ayahs, selected]);
 
   const openSurah = (s: Surah, reciterId: string = reciter) => {
     setSelected(s);
@@ -367,62 +311,44 @@ const Quran = () => {
     navigate("/quran");
   };
 
-  const handleAyahClick = (idx: number) => {
-    if (idx < 0 || idx >= ayahs.length || !selected) return;
-    // Always start or continue uninterrupted recitation from the clicked ayah without stopping
-    playFromIdx(idx);
-  };
-
   const togglePlay = () => {
-    if (!isCurrent || currentAyahIdx === -1) {
-      playFromIdx(0);
+    if (!selected) return;
+    if (!isCurrent) {
+      playFullSurah(selected, reciter);
       return;
     }
     audio.toggle();
   };
 
-  const handleNextAyahOrSurah = () => {
-    if (!selected || ayahs.length === 0) return;
-    if (currentAyahIdx >= 0 && currentAyahIdx + 1 < ayahs.length) {
-      playFromIdx(currentAyahIdx + 1);
-      return;
-    }
-    if (currentAyahIdx === -1 && ayahs.length > 1) {
-      playFromIdx(1);
-      return;
-    }
-    // At the last ayah of the surah: advance to the next surah seamlessly
+  const handleNextSurahAudio = () => {
+    if (!selected) return;
     const nextSurahNum = getNextSurahNumber(selected.number);
     const nextSurah = surahs.find((s) => s.number === nextSurahNum);
     if (nextSurah) {
-      pendingReciterResumeIdxRef.current = 0;
       openSurah(nextSurah, reciter);
-    } else {
-      playFromIdx(0);
+      if (playing) {
+        playFullSurah(nextSurah, reciter);
+      }
     }
   };
 
-  const handlePrevAyahOrSurah = () => {
-    if (!selected || ayahs.length === 0) return;
-    if (currentAyahIdx > 0) {
-      playFromIdx(currentAyahIdx - 1);
-      return;
-    }
+  const handlePrevSurahAudio = () => {
+    if (!selected) return;
     const prevSurahNum = getPrevSurahNumber(selected.number);
     const prevSurah = surahs.find((s) => s.number === prevSurahNum);
-    if (prevSurah && currentAyahIdx === 0) {
-      pendingReciterResumeIdxRef.current = 0;
+    if (prevSurah) {
       openSurah(prevSurah, reciter);
-    } else {
-      playFromIdx(0);
+      if (playing) {
+        playFullSurah(prevSurah, reciter);
+      }
     }
   };
 
   const handleReciterChange = (val: string) => {
-    if (playing && currentAyahIdx >= 0) {
-      pendingReciterResumeIdxRef.current = currentAyahIdx;
-    }
     setReciter(val);
+    if (selected && playing) {
+      playFullSurah(selected, val);
+    }
   };
 
   const { nightMode, fontSize } = settings;
@@ -605,9 +531,8 @@ const Quran = () => {
                   <Button
                     size="icon"
                     variant="outline"
-                    onClick={handlePrevAyahOrSurah}
-                    disabled={loadingAyahs || ayahs.length === 0}
-                    aria-label="الآية السابقة"
+                    onClick={handlePrevSurahAudio}
+                    aria-label="السورة السابقة"
                     className={cn(nightMode && "bg-[#101815] border-[#283932] text-[#EAE3D2] hover:bg-[#1E2D27]")}
                   >
                     <SkipForward className="h-4 w-4" />
@@ -616,7 +541,6 @@ const Quran = () => {
                     size="icon"
                     variant="emerald"
                     onClick={togglePlay}
-                    disabled={loadingAyahs || ayahs.length === 0}
                     aria-label={playing ? "إيقاف" : "تشغيل"}
                   >
                     {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
@@ -624,9 +548,8 @@ const Quran = () => {
                   <Button
                     size="icon"
                     variant="outline"
-                    onClick={handleNextAyahOrSurah}
-                    disabled={loadingAyahs || ayahs.length === 0}
-                    aria-label="الآية التالية"
+                    onClick={handleNextSurahAudio}
+                    aria-label="السورة التالية"
                     className={cn(nightMode && "bg-[#101815] border-[#283932] text-[#EAE3D2] hover:bg-[#1E2D27]")}
                   >
                     <SkipBack className="h-4 w-4" />
@@ -641,22 +564,20 @@ const Quran = () => {
                     )}
                   >
                     <Repeat className="h-3.5 w-3.5" />
-                    <span>تلاوة متصلة بدون توقف</span>
+                    <span>تلاوة السورة كاملة</span>
                   </span>
                 </div>
               </div>
               <div className="flex items-center justify-between gap-2 flex-wrap mt-2 text-xs">
                 <p className={cn(nightMode ? NIGHT_MODE_STYLES.mutedText : "text-muted-foreground")}>
-                  تلاوة مستمرة تلقائياً بدون الوقوف على الآيات • اضغط على أي آية لبدء التلاوة المتصلة منها مباشرة
+                  تلاوة متصلة للسورة كاملة بدون تقطيع أو تحديد للآيات
                 </p>
-                {currentAyahIdx >= 0 && (
-                  <p
-                    data-testid="active-ayah-indicator"
-                    className={cn("font-semibold", nightMode ? "text-[#E5C158]" : "text-primary")}
-                  >
-                    {playing ? "يتم تشغيل" : "الآية الحالية"} الآية {currentAyahIdx + 1} من {ayahs.length}
-                  </p>
-                )}
+                <p
+                  data-testid="active-surah-audio-indicator"
+                  className={cn("font-semibold", nightMode ? "text-[#E5C158]" : "text-primary")}
+                >
+                  {playing ? `جاري تشغيل تلاوة سورة ${cleanSurahName}` : "اضغط تشغيل للاستماع لتلاوة السورة كاملة"}
+                </p>
               </div>
             </div>
 
@@ -823,8 +744,7 @@ const Quran = () => {
                     )}
                     dir="rtl"
                   >
-                    {ayahs.map((a, idx) => {
-                      const isAyahActive = idx === currentAyahIdx;
+                    {ayahs.map((a) => {
                       const displayText = stripLeadingBasmalah(
                         a.text,
                         selected.number,
@@ -836,22 +756,11 @@ const Quran = () => {
                           key={a.numberInSurah}
                           id={`quran-ayah-${a.numberInSurah}`}
                           data-ayah-number={a.numberInSurah}
-                          onClick={() => handleAyahClick(idx)}
-                          className={cn(
-                            "cursor-pointer rounded-lg px-1.5 py-0.5 transition-colors",
-                            isAyahActive
-                              ? nightMode
-                                ? "bg-[#283932] text-[#F3D478] shadow-sm"
-                                : "bg-[#F3E1AE]/80 text-[#3B2604] shadow-sm"
-                              : nightMode
-                                ? "hover:bg-[#1F2F29]"
-                                : "hover:bg-[#EFE2BE]/55"
-                          )}
+                          className="px-1 py-0.5"
                         >
                           {displayText}{" "}
                           <MushafAyahMedallion
                             number={a.numberInSurah}
-                            active={isAyahActive}
                             nightMode={nightMode}
                           />{" "}
                         </span>

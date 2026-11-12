@@ -1,8 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import {
-  getAyahAudioCandidates,
+  getFullSurahAudioUrls,
   getNextContinuousPlaybackTarget,
   getNextSurahNumber,
+  getPrevSurahNumber,
   shouldAdvanceAyahEarly,
 } from "@/lib/quranAndQuizUtils";
 
@@ -20,7 +21,7 @@ export interface Track {
   audioUrl: string;
   reciterName: string;
   reciterId?: string;
-  // Full ayah list to advance continuously
+  // Full surah stream (1 item) or multi-item playlist
   playlist: PlaylistItem[];
 }
 
@@ -54,57 +55,30 @@ function getCandidateUrlsForItem(item: PlaylistItem | undefined, primaryFallback
   return urls;
 }
 
-async function fetchNextSurahTrack(
+function buildFullSurahTrack(
   surahNumber: number,
   reciterId: string,
-  reciterName: string
-): Promise<Track | null> {
-  try {
-    const res = await fetch(
-      `https://api.alquran.cloud/v1/surah/${surahNumber}/editions/quran-uthmani-quran-academy,${reciterId}`
-    );
-    if (!res.ok) return null;
-    const json = await res.json();
-    const textAyahs = json?.data?.[0]?.ayahs;
-    const audioAyahs = json?.data?.[1]?.ayahs;
-    const rawName: string = json?.data?.[0]?.name || `سورة ${surahNumber}`;
-    if (json?.code !== 200 || !Array.isArray(textAyahs) || !Array.isArray(audioAyahs) || textAyahs.length === 0) {
-      return null;
-    }
-
-    const playlist: PlaylistItem[] = textAyahs.map(
-      (a: { numberInSurah: number; number: number }, idx: number) => {
-        const rec = audioAyahs[idx];
-        const candidates = getAyahAudioCandidates({
-          audio: rec?.audio,
-          audioSecondary: rec?.audioSecondary,
-          ayahGlobalNumber: a.number,
-          reciterId,
-        });
-        return {
-          numberInSurah: a.numberInSurah,
-          audio: candidates[0] ?? rec?.audio,
-          audioUrls: candidates,
-        };
-      }
-    );
-
-    const firstUrl = playlist[0]?.audioUrls?.[0] ?? playlist[0]?.audio ?? "";
-    if (!firstUrl) return null;
-
-    return {
-      surahName: rawName.replace(/^سُورَةُ /, ""),
-      surahNumber,
-      ayahIndex: 0,
-      totalAyahs: playlist.length,
-      audioUrl: firstUrl,
-      reciterName,
-      reciterId,
-      playlist,
-    };
-  } catch {
-    return null;
-  }
+  reciterName: string,
+  surahName?: string
+): Track {
+  const candidates = getFullSurahAudioUrls(surahNumber, reciterId);
+  const firstUrl = candidates[0] ?? "";
+  return {
+    surahName: surahName || `رقم ${surahNumber}`,
+    surahNumber,
+    ayahIndex: 0,
+    totalAyahs: 1,
+    audioUrl: firstUrl,
+    reciterName,
+    reciterId,
+    playlist: [
+      {
+        numberInSurah: 1,
+        audio: firstUrl,
+        audioUrls: candidates,
+      },
+    ],
+  };
 }
 
 export function QuranAudioProvider({ children }: { children: ReactNode }) {
@@ -163,17 +137,14 @@ export function QuranAudioProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // If near the end of the surah, prefetch the next surah metadata/playlist in the background
+    // Prepare the next surah full-audio track in cache
     if (nextIdx >= track.playlist.length - 1) {
       const nextSurahNum = getNextSurahNumber(track.surahNumber);
       const reciterId = track.reciterId || "ar.husary";
       const cacheKey = `${nextSurahNum}:${reciterId}`;
       if (prefetchedSurahRef.current?.key !== cacheKey) {
-        void fetchNextSurahTrack(nextSurahNum, reciterId, track.reciterName).then((fetched) => {
-          if (fetched) {
-            prefetchedSurahRef.current = { key: cacheKey, track: fetched };
-          }
-        });
+        const nextTrack = buildFullSurahTrack(nextSurahNum, reciterId, track.reciterName);
+        prefetchedSurahRef.current = { key: cacheKey, track: nextTrack };
       }
     }
   }, []);
@@ -196,7 +167,6 @@ export function QuranAudioProvider({ children }: { children: ReactNode }) {
       const chosenUrl = candidates[candidateAttempt];
 
       if (!chosenUrl) {
-        // If all candidates for this ayah failed, immediately continue to the next ayah without stopping
         const nextIdx = (safeIdx + 1) % track.playlist.length;
         if (nextIdx !== safeIdx) {
           fallbackIdxRef.current = 0;
@@ -221,7 +191,6 @@ export function QuranAudioProvider({ children }: { children: ReactNode }) {
       setCurrent(nextTrack);
       setPlaying(true);
 
-      // Preload the next ayah into cache immediately so the transition is gapless
       preloadUpcoming(nextTrack, safeIdx + 1);
 
       el.src = chosenUrl;
@@ -235,7 +204,6 @@ export function QuranAudioProvider({ children }: { children: ReactNode }) {
           })
           .catch((err: unknown) => {
             if (reqId !== playRequestIdRef.current || userPausedRef.current) return;
-            // Ignore AbortError caused by rapid track switching
             if (err && typeof err === "object" && "name" in err && err.name === "AbortError") {
               return;
             }
@@ -270,7 +238,7 @@ export function QuranAudioProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Reached the end of the current surah: automatically continue to the next surah (or loop if offline)
+    // Reached the end of the current surah: automatically continue to the next surah full audio
     const reciterId = c.reciterId || "ar.husary";
     const cacheKey = `${target.surahNumber}:${reciterId}`;
     const cached = prefetchedSurahRef.current;
@@ -280,19 +248,10 @@ export function QuranAudioProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const reqIdAtEnd = playRequestIdRef.current;
-    void fetchNextSurahTrack(target.surahNumber, reciterId, c.reciterName).then((nextSurahTrack) => {
-      if (userPausedRef.current || playRequestIdRef.current !== reqIdAtEnd) return;
-      if (nextSurahTrack) {
-        prefetchedSurahRef.current = { key: cacheKey, track: nextSurahTrack };
-        fallbackIdxRef.current = 0;
-        playAyahAtIndex(nextSurahTrack, 0, 0);
-      } else {
-        // Fallback if offline: continue seamlessly from the beginning of the current surah without stopping
-        fallbackIdxRef.current = 0;
-        playAyahAtIndex(c, 0, 0);
-      }
-    });
+    const nextSurahTrack = buildFullSurahTrack(target.surahNumber, reciterId, c.reciterName);
+    prefetchedSurahRef.current = { key: cacheKey, track: nextSurahTrack };
+    fallbackIdxRef.current = 0;
+    playAyahAtIndex(nextSurahTrack, 0, 0);
   }, [playAyahAtIndex]);
 
   // Initialize audio element once with background-friendly & continuous playback listeners
@@ -306,8 +265,6 @@ export function QuranAudioProvider({ children }: { children: ReactNode }) {
     };
 
     const onPause = () => {
-      // Only mark playing=false if the user explicitly paused playback.
-      // Transient pause events fired by the browser while swapping el.src between ayahs must never stop playback.
       if (userPausedRef.current) {
         playingRef.current = false;
         setPlaying(false);
@@ -317,10 +274,12 @@ export function QuranAudioProvider({ children }: { children: ReactNode }) {
     const onTimeUpdate = () => {
       const c = currentRef.current;
       if (!c || userPausedRef.current) return;
+      // Only use early-advance when stepping through multi-item playlists;
+      // for a single full-surah MP3 stream (playlist.length <= 1), let it play naturally to the end.
+      if (c.playlist.length <= 1) return;
       const reqId = playRequestIdRef.current;
       if (earlyAdvancedRequestIdRef.current === reqId) return;
 
-      // Trim trailing silence at the end of per-ayah MP3s so recitation flows without stopping at ayahs
       if (shouldAdvanceAyahEarly(el.currentTime, el.duration, 0.25)) {
         earlyAdvancedRequestIdRef.current = reqId;
         advanceContinuously();
@@ -357,7 +316,6 @@ export function QuranAudioProvider({ children }: { children: ReactNode }) {
     el.addEventListener("ended", onEnd);
     el.addEventListener("error", onError);
 
-    // Resume audio if browser/tab pauses it on visibility change
     const onVisibility = () => {
       if (!document.hidden && currentRef.current && el.paused && !userPausedRef.current) {
         el.play().catch(() => {});
@@ -384,7 +342,10 @@ export function QuranAudioProvider({ children }: { children: ReactNode }) {
       return;
     }
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: `سورة ${current.surahName} • آية ${current.ayahIndex + 1}/${current.totalAyahs}`,
+      title:
+        current.playlist.length > 1
+          ? `سورة ${current.surahName} • آية ${current.ayahIndex + 1}/${current.totalAyahs}`
+          : `تلاوة سورة ${current.surahName} كاملة`,
       artist: current.reciterName,
       album: "القرآن الكريم",
     });
@@ -467,6 +428,16 @@ export function QuranAudioProvider({ children }: { children: ReactNode }) {
       const c = currentRef.current;
       if (!c) return;
       userPausedRef.current = false;
+      // When playing a single full-surah audio stream, next/prev switches to the next/previous surah
+      if (c.playlist.length <= 1) {
+        const reciterId = c.reciterId || "ar.husary";
+        const targetSurahNum =
+          delta >= 0 ? getNextSurahNumber(c.surahNumber) : getPrevSurahNumber(c.surahNumber);
+        const targetTrack = buildFullSurahTrack(targetSurahNum, reciterId, c.reciterName);
+        fallbackIdxRef.current = 0;
+        playAyahAtIndex(targetTrack, 0, 0);
+        return;
+      }
       if (c.ayahIndex + delta >= c.playlist.length) {
         advanceContinuously();
         return;
