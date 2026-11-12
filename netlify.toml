@@ -3,6 +3,14 @@
   command = "npm run build"
 
 [[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), payment=(), usb=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+
+[[headers]]
   for = "/sitemap*.xml"
   [headers.values]
     Content-Type = "application/xml; charset=utf-8"
@@ -47,6 +55,11 @@
 
 [[redirects]]
   from = "/ahadith-nabawiya"
+  to = "/hadith"
+  status = 301
+
+[[redirects]]
+  from = "/ahadith"
   to = "/hadith"
   status = 301
 

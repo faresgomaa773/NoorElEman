@@ -121,3 +121,44 @@ describe("Speculative loading", () => {
     expect(allowsBackgroundPrefetch()).toBe(true);
   });
 });
+
+describe("Security hardening & RBAC policy", () => {
+  it("hashes passwords and never stores plaintext passwords in localStorage", async () => {
+    localStorage.clear();
+    const { supabase, hashPasswordSync } = await import("../integrations/supabase/client");
+
+    const plainPass = "MySuperSecretPass#2026";
+    const email = "securitytest@example.com";
+    await supabase.auth.signUp({
+      email,
+      password: plainPass,
+      options: { data: { display_name: "فحص أمني" } },
+    });
+
+    const rawAccounts = localStorage.getItem("al_noor_local_db_accounts") || "";
+    expect(rawAccounts).not.toContain(plainPass);
+    expect(rawAccounts).toContain(hashPasswordSync(plainPass, email));
+
+    // Non-admin user cannot call admin_get_questions or insert into azkar
+    const adminRpcRes = await supabase.rpc("admin_get_questions");
+    expect(adminRpcRes.error).not.toBeNull();
+    expect(adminRpcRes.data).toBeNull();
+
+    const insertRes = await supabase.from("azkar").insert({
+      text: "محاولة غير مصرحة",
+      category: "morning",
+      repeat_count: 1,
+    });
+    expect(insertRes.error).not.toBeNull();
+  });
+
+  it("enforces HTTP security headers in _headers and netlify.toml", () => {
+    const headersFile = readFileSync("public/_headers", "utf8");
+    const netlifyToml = readFileSync("netlify.toml", "utf8");
+
+    expect(headersFile).toContain("X-Content-Type-Options: nosniff");
+    expect(headersFile).toContain("Referrer-Policy: strict-origin-when-cross-origin");
+    expect(headersFile).toContain("Strict-Transport-Security:");
+    expect(netlifyToml).toContain('X-Content-Type-Options = "nosniff"');
+  });
+});

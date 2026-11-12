@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://al-noor-quest.lovable.app/quran</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://al-noor-quest.lovable.app/quran" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://al-noor-quest.lovable.app/quran" />
+    <lastmod>2026-05-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://al-noor-quest.lovable.app/quran/1-al-fatiha</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://al-noor-quest.lovable.app/quran/1-al-fatiha" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://al-noor-quest.lovable.app/quran/1-al-fatiha" />
+    <lastmod>2026-05-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://al-noor-quest.lovable.app/quran/2-al-baqarah</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://al-noor-quest.lovable.app/quran/2-al-baqarah" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://al-noor-quest.lovable.app/quran/2-al-baqarah" />
+    <lastmod>2026-05-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://al-noor-quest.lovable.app/quran/18-al-kahf</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://al-noor-quest.lovable.app/quran/18-al-kahf" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://al-noor-quest.lovable.app/quran/18-al-kahf" />
+    <lastmod>2026-05-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://al-noor-quest.lovable.app/quran/36-ya-sin</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://al-noor-quest.lovable.app/quran/36-ya-sin" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://al-noor-quest.lovable.app/quran/36-ya-sin" />
+    <lastmod>2026-05-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://al-noor-quest.lovable.app/quran/55-ar-rahman</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://al-noor-quest.lovable.app/quran/55-ar-rahman" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://al-noor-quest.lovable.app/quran/55-ar-rahman" />
+    <lastmod>2026-05-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://al-noor-quest.lovable.app/quran/56-al-waqia</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://al-noor-quest.lovable.app/quran/56-al-waqia" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://al-noor-quest.lovable.app/quran/56-al-waqia" />
+    <lastmod>2026-05-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://al-noor-quest.lovable.app/quran/67-al-mulk</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://al-noor-quest.lovable.app/quran/67-al-mulk" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://al-noor-quest.lovable.app/quran/67-al-mulk" />
+    <lastmod>2026-05-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://al-noor-quest.lovable.app/quran/112-al-ikhlas</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://al-noor-quest.lovable.app/quran/112-al-ikhlas" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://al-noor-quest.lovable.app/quran/112-al-ikhlas" />
+    <lastmod>2026-05-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+</urlset>

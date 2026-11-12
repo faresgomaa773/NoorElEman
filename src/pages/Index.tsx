@@ -61,8 +61,37 @@ const getDailyVerse = () => {
   return dailyVerses[seed % dailyVerses.length];
 };
 
+const getHijriToday = () => {
+  const now = new Date();
+  try {
+    return new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(now);
+  } catch {
+    try {
+      return new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(now);
+    } catch {
+      return now.toLocaleDateString("ar-EG", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    }
+  }
+};
+
 const Index = () => {
   const verse = getDailyVerse();
+  const hijriToday = getHijriToday();
   const today = new Date().toLocaleDateString("ar-EG", {
     weekday: "long",
     year: "numeric",
@@ -81,13 +110,12 @@ const Index = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
           >
-            <div className="inline-flex items-center gap-2 rounded-full bg-accent/20 border border-accent/30 px-4 py-1.5 text-sm text-accent mb-8">
-              <Sparkles className="h-3.5 w-3.5" />
-              منصة دينية متكاملة
-            </div>
-            <h1 className="font-display text-primary-foreground mb-6">
-              نور الإيمان — أذكار وأدعية والقرآن الكريم
-              <span className="block text-accent text-xl md:text-2xl mt-4 font-normal font-quran">
+            <h1 className="font-display text-primary-foreground mb-6 flex flex-col items-center">
+              <span className="inline-flex items-center justify-center gap-2 rounded-2xl bg-accent/15 border border-accent/35 px-4 py-2 text-xs sm:text-sm font-medium text-accent shadow-soft mb-6 tracking-normal">
+                <Calendar className="h-3.5 w-3.5 shrink-0" />
+                <span>{hijriToday}</span>
+              </span>
+              <span className="block text-accent text-xl md:text-2xl font-normal font-quran">
                 ﴿ وَذَكِّرْ فَإِنَّ الذِّكْرَىٰ تَنفَعُ الْمُؤْمِنِينَ ﴾
               </span>
             </h1>
@@ -97,12 +125,12 @@ const Index = () => {
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Button asChild variant="hero" size="xl">
                 <Link to="/morning">
-                  ابدأ بالأذكار <ArrowLeft className="h-5 w-5" />
+                  أذكار الصباح والمساء <ArrowLeft className="h-5 w-5" />
                 </Link>
               </Button>
               <Button asChild variant="outline" size="xl" className="bg-white/10 border-white/30 text-primary-foreground hover:bg-white/20">
-                <Link to="/quiz">
-                  جرّب الاختبار
+                <Link to="/quran">
+                  تصفح المصحف الشريف
                 </Link>
               </Button>
             </div>

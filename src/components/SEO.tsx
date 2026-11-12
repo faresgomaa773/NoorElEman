@@ -231,7 +231,12 @@ export function SEO({
       <meta name="twitter:image" content={img} />
       <meta name="twitter:image:alt" content={finalTitle} />
 
-      <script type="application/ld+json">{JSON.stringify(schema)}</script>
+      <script type="application/ld+json">
+        {JSON.stringify(schema)
+          .replace(/</g, "\\u003c")
+          .replace(/>/g, "\\u003e")
+          .replace(/&/g, "\\u0026")}
+      </script>
     </Helmet>
   );
 }

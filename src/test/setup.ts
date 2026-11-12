@@ -36,3 +36,13 @@ if (typeof window.HTMLMediaElement !== "undefined") {
   window.HTMLMediaElement.prototype.load = () => {};
 }
 
+Object.defineProperty(window, "scrollTo", {
+  writable: true,
+  configurable: true,
+  value: () => {},
+});
+
+if (typeof Element !== "undefined" && !Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = () => {};
+}
+

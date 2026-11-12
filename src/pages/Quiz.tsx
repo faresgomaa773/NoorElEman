@@ -144,6 +144,12 @@ const Quiz = () => {
         correct_answer: fallbackQ.correct_answer,
         explanation: fallbackQ.explanation,
       };
+      if (user) {
+        void supabase.rpc("submit_quiz_answer", {
+          _question_id: current.id,
+          _selected_answer: opt,
+        });
+      }
     } else {
       const { data, error } = await supabase.rpc("submit_quiz_answer", {
         _question_id: current.id,

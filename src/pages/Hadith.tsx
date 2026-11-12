@@ -964,7 +964,7 @@ const Hadith = () => {
                     disabled={currentPage <= 1}
                     onClick={() => {
                       setCurrentPage((p) => Math.max(1, p - 1));
-                      window.scrollTo({ top: 260, behavior: "smooth" });
+                      window.scrollTo?.({ top: 260, behavior: "smooth" });
                     }}
                     className="gap-1.5 rounded-xl"
                   >
@@ -983,7 +983,7 @@ const Hadith = () => {
                     disabled={currentPage >= totalBookPages}
                     onClick={() => {
                       setCurrentPage((p) => Math.min(totalBookPages, p + 1));
-                      window.scrollTo({ top: 260, behavior: "smooth" });
+                      window.scrollTo?.({ top: 260, behavior: "smooth" });
                     }}
                     className="gap-1.5 rounded-xl"
                   >

@@ -48,7 +48,9 @@ describe("Application Pages & Core Functionality", () => {
 
   it("renders the Home page with hero, daily dhikr, and navigation sections", () => {
     renderWithProviders(<Index />);
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("نور الإيمان");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("وَذَكِّرْ فَإِنَّ الذِّكْرَىٰ تَنفَعُ الْمُؤْمِنِينَ");
+    expect(screen.getByRole("link", { name: /أذكار الصباح والمساء/ })).toHaveAttribute("href", "/morning");
+    expect(screen.getByRole("link", { name: /تصفح المصحف الشريف/ })).toHaveAttribute("href", "/quran");
     expect(screen.getByText("استكشف أقسام الموقع")).toBeInTheDocument();
     expect(screen.getByText("أقسام الموقع")).toBeInTheDocument();
     expect(screen.queryByText("روابط سريعة مختارة")).not.toBeInTheDocument();

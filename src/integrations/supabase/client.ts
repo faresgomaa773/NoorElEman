@@ -11,12 +11,45 @@ type TableName = keyof Database["public"]["Tables"];
 export interface StoredAccount {
   id: string;
   email: string;
-  password: string;
+  passwordHash: string;
+  password?: string; // Legacy field migrated on read
   display_name: string;
 }
 
 const STORAGE_PREFIX = "al_noor_local_db_";
 const ADMIN_EMAILS = new Set(["faresgomaa773@gmail.com"]);
+
+/**
+ * Deterministic salted FNV-1a / DJB2 Dual-64bit digest so plaintext passwords
+ * are never stored in localStorage.
+ */
+export function hashPasswordSync(password: string, emailSalt: string): string {
+  const normalizedSalt = emailSalt.trim().toLowerCase();
+  const input = `alnoor::v1::${normalizedSalt}::${password}`;
+  let h1 = 0xdeadbeef ^ input.length;
+  let h2 = 0x41c6ce57 ^ input.length;
+  for (let i = 0; i < input.length; i++) {
+    const ch = input.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  const hex1 = (h1 >>> 0).toString(16).padStart(8, "0");
+  const hex2 = (h2 >>> 0).toString(16).padStart(8, "0");
+  return `h1:${hex1}${hex2}`;
+}
+
+function verifyPasswordSync(account: StoredAccount, candidatePassword: string): boolean {
+  const expectedHash = hashPasswordSync(candidatePassword, account.email);
+  if (account.passwordHash) {
+    return account.passwordHash === expectedHash;
+  }
+  if (typeof account.password === "string") {
+    return account.password === candidatePassword;
+  }
+  return false;
+}
 
 function readStore<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -47,17 +80,36 @@ function makeId(): string {
 
 /**
  * Clean up any legacy local roles where regular users were mistakenly assigned
- * 'admin' due to the old first-user check. Only explicit ADMIN_EMAILS retain admin.
+ * 'admin' due to the old first-user check, and migrate any legacy plaintext
+ * passwords to hashed storage.
  */
 function sanitizeLocalRoles(): void {
   if (typeof window === "undefined") return;
   try {
     const accounts = readStore<StoredAccount[]>("accounts", []);
+    let accountsMigrated = false;
+    const sanitizedAccounts = accounts.map((acc) => {
+      if (typeof acc.password === "string" || !acc.passwordHash) {
+        accountsMigrated = true;
+        const hash = acc.passwordHash || hashPasswordSync(acc.password ?? "", acc.email);
+        return {
+          id: acc.id,
+          email: acc.email,
+          passwordHash: hash,
+          display_name: acc.display_name,
+        };
+      }
+      return acc;
+    });
+    if (accountsMigrated) {
+      writeStore("accounts", sanitizedAccounts);
+    }
+
     const roles = readStore<Array<Record<string, unknown>>>("user_roles", []);
     if (roles.length === 0) return;
 
     const adminUserIds = new Set(
-      accounts
+      sanitizedAccounts
         .filter((a) => ADMIN_EMAILS.has(a.email.trim().toLowerCase()))
         .map((a) => a.id)
     );
@@ -78,6 +130,17 @@ function sanitizeLocalRoles(): void {
 }
 
 sanitizeLocalRoles();
+
+function isCurrentLocalUserAdmin(): boolean {
+  const session = readStore<Session | null>("session", null);
+  const user = session?.user;
+  if (!user) return false;
+  if (user.email && ADMIN_EMAILS.has(user.email.trim().toLowerCase())) {
+    return true;
+  }
+  const roles = readStore<Array<Record<string, unknown>>>("user_roles", []);
+  return roles.some((r) => r.user_id === user.id && r.role === "admin");
+}
 
 function getTableRows(table: TableName): Record<string, unknown>[] {
   switch (table) {
@@ -163,6 +226,8 @@ function buildLocalSession(account: StoredAccount): Session {
   };
 }
 
+const ADMIN_PROTECTED_TABLES = new Set<TableName>(["azkar", "duas", "questions", "user_roles"]);
+
 function createLocalQueryBuilder(table: TableName) {
   let op: "select" | "insert" | "update" | "delete" = "select";
   let payloadData: Record<string, unknown> | Record<string, unknown>[] | null = null;
@@ -172,6 +237,10 @@ function createLocalQueryBuilder(table: TableName) {
   let singleMode = false;
 
   const execute = async (): Promise<{ data: unknown; error: null | { message: string } }> => {
+    if (op !== "select" && ADMIN_PROTECTED_TABLES.has(table) && !isCurrentLocalUserAdmin()) {
+      return { data: null, error: { message: "غير مصرح لك بتنفيذ هذه العملية (للمدراء فقط)." } };
+    }
+
     const nowIso = new Date().toISOString();
     let rows = [...getTableRows(table)];
 
@@ -318,18 +387,24 @@ function createHybridClient(rawRemoteClient: SupabaseClient<Database> | null): S
     const accounts = readStore<StoredAccount[]>("accounts", []);
     const normalizedEmail = email.trim().toLowerCase();
     const existingIdx = accounts.findIndex((a) => a.email.toLowerCase() === normalizedEmail);
+    const nextHash = password
+      ? hashPasswordSync(password, normalizedEmail)
+      : existingIdx >= 0
+        ? accounts[existingIdx].passwordHash
+        : hashPasswordSync("", normalizedEmail);
 
     const account: StoredAccount =
       existingIdx >= 0
         ? {
-            ...accounts[existingIdx],
-            password: password || accounts[existingIdx].password,
+            id: accounts[existingIdx].id,
+            email: normalizedEmail,
+            passwordHash: nextHash,
             display_name: displayName || accounts[existingIdx].display_name,
           }
         : {
             id: id || makeId(),
             email: normalizedEmail,
-            password,
+            passwordHash: nextHash,
             display_name: displayName,
           };
 
@@ -361,6 +436,9 @@ function createHybridClient(rawRemoteClient: SupabaseClient<Database> | null): S
     }
 
     if (fnName === "admin_get_questions") {
+      if (!isCurrentLocalUserAdmin()) {
+        return { data: null, error: { message: "غير مصرح بالوصول إلى بيانات الإدارة." } };
+      }
       const questions = getTableRows("questions");
       return { data: questions, error: null };
     }
@@ -368,6 +446,9 @@ function createHybridClient(rawRemoteClient: SupabaseClient<Database> | null): S
     if (fnName === "submit_quiz_answer") {
       const questionId = String(args?._question_id ?? "");
       const selectedAnswer = String(args?._selected_answer ?? "").toLowerCase();
+      if (!["a", "b", "c", "d"].includes(selectedAnswer)) {
+        return { data: null, error: { message: "خيار غير صالح." } };
+      }
       const questions = getTableRows("questions") as unknown as Database["public"]["Tables"]["questions"]["Row"][];
       const question = questions.find((q) => q.id === questionId);
       if (!question) {
@@ -542,7 +623,7 @@ function createHybridClient(rawRemoteClient: SupabaseClient<Database> | null): S
         const normalizedEmail = email.trim().toLowerCase();
         const accounts = readStore<StoredAccount[]>("accounts", []);
         const localAccount = accounts.find(
-          (a) => a.email.toLowerCase() === normalizedEmail && a.password === password
+          (a) => a.email.toLowerCase() === normalizedEmail && verifyPasswordSync(a, password)
         );
 
         if (rawRemoteClient) {

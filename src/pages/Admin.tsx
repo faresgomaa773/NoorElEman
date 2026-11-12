@@ -60,14 +60,14 @@ const Admin = () => {
 
   if (authLoading) return (
     <Layout>
-      <SEO title="لوحة التحكم | نور الإيمان" description="إدارة المحتوى والمستخدمين والأسئلة في منصة نور الإيمان." />
+      <SEO title="لوحة التحكم | نور الإيمان" description="إدارة المحتوى والمستخدمين والأسئلة في منصة نور الإيمان." noindex />
       <div className="container py-20 text-center text-muted-foreground">جاري التحقق...</div>
     </Layout>
   );
   if (!user) return <Navigate to="/auth" replace />;
   if (!isAdmin) return (
     <Layout>
-      <SEO title="لوحة التحكم | نور الإيمان" description="إدارة المحتوى والمستخدمين والأسئلة في منصة نور الإيمان." />
+      <SEO title="لوحة التحكم | نور الإيمان" description="إدارة المحتوى والمستخدمين والأسئلة في منصة نور الإيمان." noindex />
       <div className="container py-20 text-center">
         <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
         <h2 className="font-display text-2xl font-bold mb-2">وصول مرفوض</h2>
@@ -81,13 +81,23 @@ const Admin = () => {
   const saveZikr = async (e: React.FormEvent<HTMLFormElement>, id?: string) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const text = String(fd.get("text") ?? "").trim();
+    if (!text) {
+      toast({ title: "خطأ", description: "يرجى إدخال نص الذكر.", variant: "destructive" });
+      return;
+    }
+    const rawCat = String(fd.get("category") ?? "general");
+    const validCategories: ZikrCat[] = ["morning", "evening", "awrad", "sleep", "general"];
+    const category: ZikrCat = validCategories.includes(rawCat as ZikrCat) ? (rawCat as ZikrCat) : "general";
+    const repeatCount = Math.max(1, Math.min(1000, Math.floor(Number(fd.get("repeat_count") ?? 1) || 1)));
+    const displayOrder = Math.max(0, Math.min(10000, Math.floor(Number(fd.get("display_order") ?? 0) || 0)));
     const payload = {
-      text: String(fd.get("text") ?? ""),
-      category: String(fd.get("category") ?? "general") as ZikrCat,
-      repeat_count: Number(fd.get("repeat_count") ?? 1),
-      virtue: String(fd.get("virtue") ?? "") || null,
-      source: String(fd.get("source") ?? "") || null,
-      display_order: Number(fd.get("display_order") ?? 0),
+      text,
+      category,
+      repeat_count: repeatCount,
+      virtue: String(fd.get("virtue") ?? "").trim() || null,
+      source: String(fd.get("source") ?? "").trim() || null,
+      display_order: displayOrder,
     };
     const res = id
       ? await supabase.from("azkar").update(payload).eq("id", id)
@@ -96,20 +106,27 @@ const Admin = () => {
     else { toast({ title: "تم الحفظ" }); refresh(); }
   };
   const deleteZikr = async (id: string) => {
-    await supabase.from("azkar").delete().eq("id", id);
-    toast({ title: "تم الحذف" }); refresh();
+    const { error } = await supabase.from("azkar").delete().eq("id", id);
+    if (error) toast({ title: "خطأ", description: error.message, variant: "destructive" });
+    else { toast({ title: "تم الحذف" }); refresh(); }
   };
 
   // ---- Duas handlers
   const saveDua = async (e: React.FormEvent<HTMLFormElement>, id?: string) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const title = String(fd.get("title") ?? "").trim();
+    const text = String(fd.get("text") ?? "").trim();
+    if (!title || !text) {
+      toast({ title: "خطأ", description: "يرجى إدخال عنوان ونص الدعاء.", variant: "destructive" });
+      return;
+    }
     const payload = {
-      title: String(fd.get("title") ?? ""),
-      text: String(fd.get("text") ?? ""),
-      category: String(fd.get("category") ?? "عام"),
-      source: String(fd.get("source") ?? "") || null,
-      display_order: Number(fd.get("display_order") ?? 0),
+      title,
+      text,
+      category: String(fd.get("category") ?? "عام").trim() || "عام",
+      source: String(fd.get("source") ?? "").trim() || null,
+      display_order: Math.max(0, Math.min(10000, Math.floor(Number(fd.get("display_order") ?? 0) || 0))),
     };
     const res = id
       ? await supabase.from("duas").update(payload).eq("id", id)
@@ -118,25 +135,32 @@ const Admin = () => {
     else { toast({ title: "تم الحفظ" }); refresh(); }
   };
   const deleteDua = async (id: string) => {
-    await supabase.from("duas").delete().eq("id", id);
-    toast({ title: "تم الحذف" }); refresh();
+    const { error } = await supabase.from("duas").delete().eq("id", id);
+    if (error) toast({ title: "خطأ", description: error.message, variant: "destructive" });
+    else { toast({ title: "تم الحذف" }); refresh(); }
   };
 
   // ---- Questions handlers
   const saveQuestion = async (e: React.FormEvent<HTMLFormElement>, id?: string) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const rawCorrect = String(fd.get("correct_answer") ?? "a").toLowerCase();
+    const correctAnswer = ["a", "b", "c", "d"].includes(rawCorrect) ? rawCorrect : "a";
     const payload = {
-      question_text: String(fd.get("question_text") ?? ""),
-      option_a: String(fd.get("option_a") ?? ""),
-      option_b: String(fd.get("option_b") ?? ""),
-      option_c: String(fd.get("option_c") ?? ""),
-      option_d: String(fd.get("option_d") ?? ""),
-      correct_answer: String(fd.get("correct_answer") ?? "a"),
-      points: Number(fd.get("points") ?? 10),
-      category: String(fd.get("category") ?? "عام"),
-      explanation: String(fd.get("explanation") ?? "") || null,
+      question_text: String(fd.get("question_text") ?? "").trim(),
+      option_a: String(fd.get("option_a") ?? "").trim(),
+      option_b: String(fd.get("option_b") ?? "").trim(),
+      option_c: String(fd.get("option_c") ?? "").trim(),
+      option_d: String(fd.get("option_d") ?? "").trim(),
+      correct_answer: correctAnswer,
+      points: Math.max(1, Math.min(100, Math.floor(Number(fd.get("points") ?? 10) || 10))),
+      category: String(fd.get("category") ?? "عام").trim() || "عام",
+      explanation: String(fd.get("explanation") ?? "").trim() || null,
     };
+    if (!payload.question_text || !payload.option_a || !payload.option_b || !payload.option_c || !payload.option_d) {
+      toast({ title: "خطأ", description: "يرجى إكمال نص السؤال وجميع الخيارات الأربعة.", variant: "destructive" });
+      return;
+    }
     const res = id
       ? await supabase.from("questions").update(payload).eq("id", id)
       : await supabase.from("questions").insert(payload);
@@ -144,17 +168,26 @@ const Admin = () => {
     else { toast({ title: "تم الحفظ" }); refresh(); }
   };
   const deleteQuestion = async (id: string) => {
-    await supabase.from("questions").delete().eq("id", id);
-    toast({ title: "تم الحذف" }); refresh();
+    const { error } = await supabase.from("questions").delete().eq("id", id);
+    if (error) toast({ title: "خطأ", description: error.message, variant: "destructive" });
+    else { toast({ title: "تم الحذف" }); refresh(); }
   };
 
   // ---- Users
   const deleteUser = async (id: string) => {
+    if (id === user.id) {
+      toast({ title: "تنبيه", description: "لا يمكنك حذف حسابك الشخصي من لوحة التحكم.", variant: "destructive" });
+      return;
+    }
     const { error } = await supabase.from("profiles").delete().eq("id", id);
     if (error) toast({ title: "خطأ", description: error.message, variant: "destructive" });
     else { toast({ title: "تم الحذف" }); refresh(); }
   };
   const toggleAdmin = async (userId: string, makeAdmin: boolean) => {
+    if (!makeAdmin && userId === user.id) {
+      toast({ title: "تنبيه", description: "لا يمكنك سحب صلاحية المدير من حسابك الشخصي.", variant: "destructive" });
+      return;
+    }
     if (makeAdmin) {
       await supabase.from("user_roles").insert({ user_id: userId, role: "admin" });
     } else {
@@ -168,6 +201,7 @@ const Admin = () => {
       <SEO
         title="لوحة التحكم | نور الإيمان"
         description="إدارة المحتوى والمستخدمين والأسئلة في منصة نور الإيمان."
+        noindex
       />
       <section className="bg-gradient-emerald text-primary-foreground py-10">
         <div className="container">
