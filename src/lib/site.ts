@@ -13,6 +13,7 @@ export const DESCRIPTIVE_ROUTE_ALIASES: Record<string, string> = {
   "/islamic-duas": "/duas",
   "/prophetic-hadiths": "/hadith",
   "/ahadith-nabawiya": "/hadith",
+  "/ahadith": "/hadith",
   "/holy-quran": "/quran",
   "/electronic-tasbih": "/tasbih",
   "/islamic-quiz": "/quiz",
@@ -476,6 +477,68 @@ export const ROUTE_SEO_META: Record<string, RouteSeoMeta> = {
     ],
   },
 };
+
+export interface SitemapEntry {
+  path: string;
+  section: "pages" | "hadith" | "duas" | "quran";
+  changefreq: "daily" | "weekly" | "monthly";
+  priority: string;
+}
+
+export const SITEMAP_LASTMOD = "2026-05-25";
+
+export const SITEMAP_FILES = [
+  "/sitemap.xml",
+  "/sitemap-index.xml",
+  "/sitemap-pages.xml",
+  "/sitemap-hadith.xml",
+  "/sitemap-duas.xml",
+  "/sitemap-quran.xml",
+] as const;
+
+export const SITEMAP_ENTRIES: SitemapEntry[] = [
+  // 1. Main Public Pages (8 routes)
+  { path: "/", section: "pages", changefreq: "daily", priority: "1.0" },
+  { path: "/morning", section: "pages", changefreq: "daily", priority: "0.9" },
+  { path: "/evening", section: "pages", changefreq: "daily", priority: "0.9" },
+  { path: "/duas", section: "pages", changefreq: "weekly", priority: "0.9" },
+  { path: "/hadith", section: "pages", changefreq: "weekly", priority: "0.9" },
+  { path: "/quran", section: "pages", changefreq: "weekly", priority: "0.9" },
+  { path: "/tasbih", section: "pages", changefreq: "monthly", priority: "0.8" },
+  { path: "/quiz", section: "pages", changefreq: "monthly", priority: "0.8" },
+
+  // 2. Complete Hadith Books & Thematic Collections (15 routes)
+  ...Object.values(HADITH_CATEGORY_SLUGS).map(
+    (item): SitemapEntry => ({
+      path: `/hadith/${item.slug}`,
+      section: "hadith",
+      changefreq: "weekly",
+      priority: "0.85",
+    })
+  ),
+
+  // 3. Dua Categories (8 routes)
+  ...Object.values(DUA_CATEGORY_SLUGS).map(
+    (item): SitemapEntry => ({
+      path: `/duas/${item.slug}`,
+      section: "duas",
+      changefreq: "weekly",
+      priority: "0.8",
+    })
+  ),
+
+  // 4. Featured Quran Surahs (8 routes)
+  ...POPULAR_SURAHS.map(
+    (surah): SitemapEntry => ({
+      path: `/quran/${surah.slug}`,
+      section: "quran",
+      changefreq: "weekly",
+      priority: "0.85",
+    })
+  ),
+];
+
+export const SITEMAP_PATHS: string[] = SITEMAP_ENTRIES.map((entry) => entry.path);
 
 /**
  * Normalizes a URL pathname by stripping query/hash, trailing slashes,

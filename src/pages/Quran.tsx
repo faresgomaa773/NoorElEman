@@ -429,7 +429,12 @@ const Quran = () => {
   const quranFontClass = FONT_SIZE_CLASSES[fontSize].quran;
 
   const cleanSurahName = selected ? formatSurahUiName(selected.name) : "";
-  const activeSurahSlug = selected ? createSurahSlug(selected.number, selected.englishName) : undefined;
+  const parsedRouteSurahNumber = parseSurahNumberFromSlug(surahSlug);
+  const activeSurahSlug = selected
+    ? createSurahSlug(selected.number, selected.englishName)
+    : parsedRouteSurahNumber !== null && surahSlug
+      ? surahSlug.toLowerCase()
+      : undefined;
   const surahTypeAr = selected ? (selected.revelationType === "Meccan" ? "مكية" : "مدنية") : "";
 
   const prevSurahObj = selected
@@ -454,7 +459,14 @@ const Quran = () => {
             ? `اقرأ واستمع إلى سورة ${cleanSurahName} (${surahTypeAr} - ${selected.numberOfAyahs} آية) مكتوبة كاملة بالرسم العثماني برواية حفص عن عاصم مع تلاوة متصلة لأشهر القراء.`
             : undefined
         }
-        canonicalPath={activeSurahSlug ? `/quran/${activeSurahSlug}` : "/quran"}
+        noindex={Boolean(surahSlug && parsedRouteSurahNumber === null)}
+        canonicalPath={
+          activeSurahSlug
+            ? `/quran/${activeSurahSlug}`
+            : surahSlug
+              ? `/quran/${surahSlug}`
+              : "/quran"
+        }
         breadcrumbs={
           selected && activeSurahSlug
             ? [

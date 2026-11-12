@@ -421,7 +421,16 @@ const Hadith = () => {
       <SEO
         title={activeCategoryMeta?.title}
         description={activeCategoryMeta?.description}
-        canonicalPath={activeCategoryMeta ? `/hadith/${activeCategoryMeta.slug}` : "/hadith"}
+        noindex={Boolean(categorySlug && !activeCategoryMeta && !selectedBook)}
+        canonicalPath={
+          activeCategoryMeta
+            ? `/hadith/${activeCategoryMeta.slug}`
+            : selectedBook
+              ? `/hadith/${selectedBook.slug}`
+              : categorySlug
+                ? `/hadith/${categorySlug}`
+                : "/hadith"
+        }
         breadcrumbs={
           activeCategoryMeta
             ? [

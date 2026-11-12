@@ -212,7 +212,7 @@ export function SEO({
       <meta name="robots" content={robotsDirective} />
       <meta name="googlebot" content={robotsDirective} />
 
-      <link rel="canonical" href={canonicalUrl} />
+      {indexable && <link rel="canonical" href={canonicalUrl} />}
       {indexable && <link rel="alternate" hrefLang="ar" href={canonicalUrl} />}
       {indexable && <link rel="alternate" hrefLang="x-default" href={canonicalUrl} />}
 

@@ -33,3 +33,4 @@ User-agent: Google-Extended
 Allow: /
 
 Sitemap: https://al-noor-quest.lovable.app/sitemap.xml
+Sitemap: https://al-noor-quest.lovable.app/sitemap-index.xml

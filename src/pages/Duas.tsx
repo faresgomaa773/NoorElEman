@@ -145,7 +145,14 @@ const Duas = () => {
       <SEO
         title={activeCategoryMeta?.title}
         description={activeCategoryMeta?.description}
-        canonicalPath={activeCategoryMeta ? `/duas/${activeCategoryMeta.slug}` : "/duas"}
+        noindex={Boolean(categorySlug && !matchedSlugMeta)}
+        canonicalPath={
+          activeCategoryMeta
+            ? `/duas/${activeCategoryMeta.slug}`
+            : categorySlug
+              ? `/duas/${categorySlug}`
+              : "/duas"
+        }
         breadcrumbs={
           activeCategoryMeta
             ? [
