@@ -1,7 +1,7 @@
 {
-  "name": "نور الإيمان",
+  "name": "نور الإيمان — أذكار وأدعية والقرآن الكريم",
   "short_name": "نور الإيمان",
-  "description": "أذكار الصباح والمساء، الأدعية، القرآن الكريم ومواقيت الصلاة",
+  "description": "منصة نور الإيمان الإسلامية المتكاملة: أذكار الصباح والمساء، الأدعية المأثورة، كتب الحديث الشريف، القرآن الكريم ومواقيت الصلاة",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -10,6 +10,7 @@
   "lang": "ar",
   "dir": "rtl",
   "icons": [
-    { "src": "/placeholder.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "/favicon.ico", "sizes": "64x64 32x32 24x24 16x16", "type": "image/x-icon" }
   ]
 }

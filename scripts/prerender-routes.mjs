@@ -1,10 +1,18 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 
-const SITE_URL = "https://al-noor-quest.lovable.app";
+const SITE_URL = "https://nooreleman.site";
 const LASTMOD = "2026-05-25";
-const DEFAULT_IMAGE =
-  "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/08546d39-2455-4a48-b81e-8ff8a037e911/id-preview-cfd3ae0f--3668b397-3abf-47a0-8c92-b6878c69e5eb.lovable.app-1776933579072.png";
+const DEFAULT_IMAGE = `${SITE_URL}/og-image.svg`;
+const SITE_ALTERNATE_NAMES = [
+  "نور الإيمان",
+  "نور الايمان",
+  "منصة نور الإيمان",
+  "موقع نور الإيمان",
+  "منصة نور الإيمان الإسلامية",
+  "Noor El Eman",
+  "nooreleman.site",
+];
 const PUBLIC_DIR = join(process.cwd(), "public");
 const DIST_DIR = join(process.cwd(), "dist");
 const BASE_HTML_PATH = join(DIST_DIR, "index.html");
@@ -589,13 +597,13 @@ function buildRouteHtml(baseHtml, route, indexable = true) {
         "@type": "Organization",
         "@id": `${SITE_URL}/#organization`,
         name: "نور الإيمان",
-        alternateName: "منصة نور الإيمان الإسلامية",
+        alternateName: SITE_ALTERNATE_NAMES,
         url: `${SITE_URL}/`,
         logo: {
           "@type": "ImageObject",
           "@id": `${SITE_URL}/#logo`,
-          url: DEFAULT_IMAGE,
-          contentUrl: DEFAULT_IMAGE,
+          url: `${SITE_URL}/icon.svg`,
+          contentUrl: `${SITE_URL}/icon.svg`,
           caption: "نور الإيمان",
         },
       },
@@ -603,7 +611,7 @@ function buildRouteHtml(baseHtml, route, indexable = true) {
         "@type": "WebSite",
         "@id": `${SITE_URL}/#website`,
         name: "نور الإيمان",
-        alternateName: "منصة نور الإيمان الإسلامية",
+        alternateName: SITE_ALTERNATE_NAMES,
         url: `${SITE_URL}/`,
         inLanguage: "ar",
         publisher: {

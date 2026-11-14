@@ -34,11 +34,18 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return Boolean(localStorage.getItem("al_noor_local_db_session"));
+    } catch {
+      return false;
+    }
+  });
 
   const checkAdmin = useCallback(async (currentUser: User | null): Promise<boolean> => {
     if (!currentUser) {
-      setIsAdmin(false);
+      setIsAdmin((prev) => (prev ? false : prev));
       return false;
     }
 
@@ -48,7 +55,7 @@ export function useAuth() {
     // never grant admin privileges automatically.
     const regularUsers = getRegularSignupUsers();
     if (regularUsers.has(currentUser.id) && !OWNER_ADMIN_EMAILS.has(email)) {
-      setIsAdmin(false);
+      setIsAdmin((prev) => (prev ? false : prev));
       return false;
     }
 
@@ -61,14 +68,14 @@ export function useAuth() {
         .maybeSingle();
 
       if (error || !data) {
-        setIsAdmin(false);
+        setIsAdmin((prev) => (prev ? false : prev));
         return false;
       }
 
-      setIsAdmin(true);
+      setIsAdmin((prev) => (prev ? prev : true));
       return true;
     } catch {
-      setIsAdmin(false);
+      setIsAdmin((prev) => (prev ? false : prev));
       return false;
     }
   }, []);
@@ -76,14 +83,14 @@ export function useAuth() {
   const syncSession = useCallback(
     async (nextSession: Session | null) => {
       const nextUser = nextSession?.user ?? null;
-      setSession(nextSession);
-      setUser(nextUser);
+      setSession((prev) => (prev?.access_token === nextSession?.access_token ? prev : nextSession));
+      setUser((prev) => (prev?.id === nextUser?.id ? prev : nextUser));
       if (nextUser) {
         await checkAdmin(nextUser);
       } else {
-        setIsAdmin(false);
+        setIsAdmin((prev) => (prev ? false : prev));
       }
-      setLoading(false);
+      setLoading((prev) => (prev ? false : prev));
     },
     [checkAdmin]
   );

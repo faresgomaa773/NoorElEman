@@ -1,6 +1,5 @@
 import { createClient, type SupabaseClient, type Session, type User } from "@supabase/supabase-js";
 import type { Database } from "./types";
-import { brokeredPreviewStorage } from "./previewAuthStorage";
 import { DEFAULT_AZKAR, DEFAULT_DUAS, DEFAULT_QUESTIONS } from "@/data/islamicData";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -700,7 +699,7 @@ const hasSupabaseEnv = Boolean(SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY);
 const rawRemoteSupabase: SupabaseClient<Database> | null = hasSupabaseEnv
   ? createClient<Database>(SUPABASE_URL!, SUPABASE_PUBLISHABLE_KEY!, {
       auth: {
-        storage: brokeredPreviewStorage(),
+        storage: typeof window !== "undefined" ? window.localStorage : undefined,
         persistSession: true,
         autoRefreshToken: true,
       },

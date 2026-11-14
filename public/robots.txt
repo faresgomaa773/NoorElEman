@@ -1,4 +1,4 @@
-# robots.txt — نور الإيمان
+# robots.txt — نور الإيمان (https://nooreleman.site)
 User-agent: *
 Allow: /
 Disallow: /admin
@@ -32,5 +32,5 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-Sitemap: https://al-noor-quest.lovable.app/sitemap.xml
-Sitemap: https://al-noor-quest.lovable.app/sitemap-index.xml
+Sitemap: https://nooreleman.site/sitemap.xml
+Sitemap: https://nooreleman.site/sitemap-index.xml

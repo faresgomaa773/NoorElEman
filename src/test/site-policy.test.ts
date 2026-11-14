@@ -21,7 +21,7 @@ describe("Public discovery & Google Search Console indexing policy", () => {
     const xml = readFileSync("public/sitemap.xml", "utf8");
     const urls = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => m[1]);
     expect(urls.sort()).toEqual(SITEMAP_PATHS.map((path) => getCanonicalUrl(path)).sort());
-    expect(SITE_URL).toBe("https://al-noor-quest.lovable.app");
+    expect(SITE_URL).toBe("https://nooreleman.site");
   });
 
   it("maintains synchronized modular sitemaps and sitemap-index.xml", () => {
@@ -37,6 +37,7 @@ describe("Public discovery & Google Search Console indexing policy", () => {
     for (const file of SITEMAP_FILES) {
       const content = readFileSync(`public/${file}`, "utf8");
       expect(content).toContain(SITE_URL);
+      expect(content.toLowerCase()).not.toContain("lovable");
       expect(content).not.toContain("/auth");
       expect(content).not.toContain("/admin");
       expect(content).not.toContain("/profile");
@@ -75,8 +76,8 @@ describe("Public discovery & Google Search Console indexing policy", () => {
     expect(normalizePath("/azkar-al-sabah")).toBe("/morning");
     expect(normalizePath("/azkar-al-masaa")).toBe("/evening");
     expect(normalizePath("/ahadith")).toBe("/hadith");
-    expect(getCanonicalUrl("/azkar-al-sabah")).toBe("https://al-noor-quest.lovable.app/morning");
-    expect(getCanonicalUrl("/quran/18-al-kahf/")).toBe("https://al-noor-quest.lovable.app/quran/18-al-kahf");
+    expect(getCanonicalUrl("/azkar-al-sabah")).toBe("https://nooreleman.site/morning");
+    expect(getCanonicalUrl("/quran/18-al-kahf/")).toBe("https://nooreleman.site/quran/18-al-kahf");
   });
 
   it("normalizes trailing slashes and query parameters so public routes are never marked noindex", () => {
@@ -86,8 +87,8 @@ describe("Public discovery & Google Search Console indexing policy", () => {
     expect(isIndexablePath("/morning/")).toBe(true);
     expect(isIndexablePath("/duas/")).toBe(true);
     expect(isIndexablePath("/hadith/")).toBe(true);
-    expect(getCanonicalUrl("/morning/")).toBe("https://al-noor-quest.lovable.app/morning");
-    expect(getCanonicalUrl("/")).toBe("https://al-noor-quest.lovable.app/");
+    expect(getCanonicalUrl("/morning/")).toBe("https://nooreleman.site/morning");
+    expect(getCanonicalUrl("/")).toBe("https://nooreleman.site/");
   });
 
   it("provides dedicated SEO metadata for every indexable public route", () => {
@@ -99,8 +100,13 @@ describe("Public discovery & Google Search Console indexing policy", () => {
     }
   });
 
-  it("keeps robots.txt clean and aligned with sitemap and private routes", () => {
+  it("keeps robots.txt, index.html, llms.txt, package.json, and vercel.json aligned with nooreleman.site and free of legacy references", () => {
     const robots = readFileSync("public/robots.txt", "utf8");
+    const indexHtml = readFileSync("index.html", "utf8");
+    const llmsTxt = readFileSync("public/llms.txt", "utf8");
+    const pkgJson = readFileSync("package.json", "utf8");
+    const vercelJson = readFileSync("vercel.json", "utf8");
+
     expect(robots).toContain(`Sitemap: ${SITE_URL}/sitemap.xml`);
     expect(robots).toContain(`Sitemap: ${SITE_URL}/sitemap-index.xml`);
     expect(robots).toContain("Disallow: /admin");
@@ -108,6 +114,15 @@ describe("Public discovery & Google Search Console indexing policy", () => {
     expect(robots).toContain("Disallow: /profile");
     expect(robots).toContain("Disallow: /favorites");
     expect(robots).not.toContain("Host:");
+
+    expect(indexHtml).toContain(`href="${SITE_URL}/"`);
+    expect(indexHtml).toContain("نور الإيمان");
+    expect(indexHtml).toContain("نور الايمان");
+    expect(vercelJson).toContain('"/index.html"');
+
+    for (const content of [robots, indexHtml, llmsTxt, pkgJson]) {
+      expect(content.toLowerCase()).not.toContain("lovable");
+    }
   });
 });
 

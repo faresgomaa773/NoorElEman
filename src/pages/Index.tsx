@@ -111,6 +111,7 @@ const Index = () => {
             transition={{ duration: 0.7 }}
           >
             <h1 className="font-display text-primary-foreground mb-6 flex flex-col items-center">
+              <span className="sr-only">نور الإيمان (نور الايمان) — موقع الأذكار والأدعية والأحاديث النبوية والقرآن الكريم — </span>
               <span className="inline-flex items-center justify-center gap-2 rounded-2xl bg-accent/15 border border-accent/35 px-4 py-2 text-xs sm:text-sm font-medium text-accent shadow-soft mb-6 tracking-normal">
                 <Calendar className="h-3.5 w-3.5 shrink-0" />
                 <span>{hijriToday}</span>

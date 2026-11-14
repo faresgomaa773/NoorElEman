@@ -2,6 +2,7 @@ import { Helmet } from "react-helmet-async";
 import { useLocation } from "react-router-dom";
 import {
   SITE_URL,
+  SITE_ALTERNATE_NAMES,
   PUBLIC_PATHS,
   ROUTE_SEO_META,
   HOME_FAQS,
@@ -27,8 +28,7 @@ interface SEOProps {
   canonicalPath?: string;
 }
 
-const DEFAULT_IMAGE =
-  "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/08546d39-2455-4a48-b81e-8ff8a037e911/id-preview-cfd3ae0f--3668b397-3abf-47a0-8c92-b6878c69e5eb.lovable.app-1776933579072.png";
+const DEFAULT_IMAGE = `${SITE_URL}/og-image.svg`;
 
 /**
  * Per-route SEO manager under HelmetProvider.
@@ -129,13 +129,13 @@ export function SEO({
         "@type": "Organization",
         "@id": `${SITE_URL}/#organization`,
         name: "نور الإيمان",
-        alternateName: "منصة نور الإيمان الإسلامية",
+        alternateName: SITE_ALTERNATE_NAMES,
         url: `${SITE_URL}/`,
         logo: {
           "@type": "ImageObject",
           "@id": `${SITE_URL}/#logo`,
-          url: img,
-          contentUrl: img,
+          url: `${SITE_URL}/icon.svg`,
+          contentUrl: `${SITE_URL}/icon.svg`,
           caption: "نور الإيمان",
         },
       },
@@ -143,7 +143,7 @@ export function SEO({
         "@type": "WebSite",
         "@id": `${SITE_URL}/#website`,
         name: "نور الإيمان",
-        alternateName: "منصة نور الإيمان الإسلامية",
+        alternateName: SITE_ALTERNATE_NAMES,
         url: `${SITE_URL}/`,
         inLanguage: "ar",
         description: ROUTE_SEO_META["/"].description,
